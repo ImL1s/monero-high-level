@@ -1,0 +1,74 @@
+{
+  "description": "Stagenet address derivation test vectors",
+  "network": "stagenet",
+  "generated_by": "monero-wallet-cli v0.18.4.4",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "vectors": [
+    {
+      "id": "stagenet-001",
+      "mnemonic": "vivid birth enjoy arrange bicycle lumber myth gawk pyramid hockey orange kangaroo puffin abbey ugly birth enjoy arrange bicycle lumber myth gawk pyramid hockey vipers vipers",
+      "seed_hex": "<to_be_filled_by_oracle>",
+      "restore_height": 0,
+      "expected": {
+        "primary_address": "<to_be_filled_by_oracle>",
+        "private_spend_key": "<to_be_filled_by_oracle>",
+        "private_view_key": "<to_be_filled_by_oracle>",
+        "public_spend_key": "<to_be_filled_by_oracle>",
+        "public_view_key": "<to_be_filled_by_oracle>",
+        "subaddresses": [
+          {
+            "account": 0,
+            "index": 0,
+            "address": "<primary_address_same_as_above>"
+          },
+          {
+            "account": 0,
+            "index": 1,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 2,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 3,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 4,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 5,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 6,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 7,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 8,
+            "address": "<to_be_filled_by_oracle>"
+          },
+          {
+            "account": 0,
+            "index": 9,
+            "address": "<to_be_filled_by_oracle>"
+          }
+        ]
+      }
+    }
+  ],
+  "notes": "Replace <to_be_filled_by_oracle> placeholders by running scripts/generate_vectors.sh with monero-wallet-cli --stagenet."
+}
