@@ -1,13 +1,15 @@
 /// Monero Daemon RPC Client
 ///
 /// Implements JSON-RPC 2.0 protocol for monerod communication.
+/// Supports retry with exponential backoff and circuit breaker pattern.
 library;
 
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:http/http.dart' as http;
+
+import 'rpc_utils.dart';
 
 /// Daemon RPC client for Monero node communication.
 class DaemonClient {
@@ -17,6 +19,8 @@ class DaemonClient {
   final String? username;
   final String? password;
   final Duration timeout;
+  final RetryConfig retryConfig;
+  final CircuitBreaker? circuitBreaker;
 
   late final Dio _dio;
   late final String _baseUrl;
@@ -28,6 +32,8 @@ class DaemonClient {
     this.username,
     this.password,
     this.timeout = const Duration(seconds: 30),
+    this.retryConfig = const RetryConfig(),
+    this.circuitBreaker,
   }) {
     final scheme = useSsl ? 'https' : 'http';
     _baseUrl = '$scheme://$host:$port';
@@ -37,6 +43,9 @@ class DaemonClient {
       connectTimeout: timeout,
       receiveTimeout: timeout,
     ));
+
+    // Add retry interceptor
+    _dio.interceptors.add(RetryInterceptor(dio: _dio, config: retryConfig));
 
     if (username != null && password != null) {
       _dio.interceptors.add(InterceptorsWrapper(
@@ -100,30 +109,57 @@ class DaemonClient {
     return txs.map((tx) => PoolTransaction.fromJson(tx as Map<String, dynamic>)).toList();
   }
 
-  /// JSON-RPC 2.0 call
+  /// JSON-RPC 2.0 call with retry and circuit breaker support
   Future<Map<String, dynamic>> _jsonRpc(String method, [Map<String, dynamic>? params]) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/json_rpc',
-      data: {
-        'jsonrpc': '2.0',
-        'id': '0',
-        'method': method,
-        if (params != null) 'params': params,
-      },
-    );
+    _checkCircuitBreaker();
+    
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/json_rpc',
+        data: {
+          'jsonrpc': '2.0',
+          'id': '0',
+          'method': method,
+          if (params != null) 'params': params,
+        },
+      );
 
-    final body = response.data!;
-    if (body.containsKey('error')) {
-      throw DaemonException.fromJson(body['error'] as Map<String, dynamic>);
+      final body = response.data!;
+      if (body.containsKey('error')) {
+        final error = body['error'] as Map<String, dynamic>;
+        circuitBreaker?.recordFailure();
+        throw RpcException.fromRpcError(error);
+      }
+
+      circuitBreaker?.recordSuccess();
+      return body['result'] as Map<String, dynamic>;
+    } on DioException catch (e) {
+      circuitBreaker?.recordFailure();
+      throw RpcException.fromDioError(e);
     }
-
-    return body['result'] as Map<String, dynamic>;
   }
 
-  /// Direct HTTP request (for non-JSON-RPC endpoints)
+  /// Direct HTTP request with retry and circuit breaker support
   Future<Map<String, dynamic>> _request(String path, Map<String, dynamic> body) async {
-    final response = await _dio.post<Map<String, dynamic>>(path, data: body);
-    return response.data!;
+    _checkCircuitBreaker();
+    
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(path, data: body);
+      circuitBreaker?.recordSuccess();
+      return response.data!;
+    } on DioException catch (e) {
+      circuitBreaker?.recordFailure();
+      throw RpcException.fromDioError(e);
+    }
+  }
+  
+  void _checkCircuitBreaker() {
+    if (circuitBreaker != null && !circuitBreaker!.allowRequest()) {
+      throw RpcException(
+        type: RpcErrorType.connectionError,
+        message: 'Circuit breaker is open, requests blocked',
+      );
+    }
   }
 
   String _bytesToHex(Uint8List bytes) =>

@@ -32,13 +32,13 @@
 - [x] **K2.1**: 引入 Ktor Client.
 - [x] **K2.2**: 定義 JSON-RPC Request/Response 資料模型 (`@Serializable`).
 - [x] **K2.3**: 實作 `DaemonClient` (get_info, get_block, send_raw_transaction).
-- [ ] **K2.4**: 撰寫連線測試 (連接 Stagenet 節點).
+- [x] **K2.4**: 撰寫連線測試 (連接 Stagenet 節點).
 
 ### Dart
 - [x] **D2.1**: 引入 `http` 或 `dio`.
 - [x] **D2.2**: 定義 RPC 資料模型.
 - [x] **D2.3**: 實作 `DaemonRpcClient`.
-- [ ] **D2.4**: 實作 RPC 錯誤處理與重試機制.
+- [x] **D2.4**: 實作 RPC 錯誤處理與重試機制.
 
 ## Phase 3: 區塊同步與掃描 (Sync & Scanning)
 

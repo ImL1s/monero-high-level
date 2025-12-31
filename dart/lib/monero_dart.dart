@@ -24,6 +24,7 @@ export 'src/core/keys.dart';
 
 // Network
 export 'src/network/daemon_client.dart';
+export 'src/network/rpc_utils.dart';
 
 // Storage
 export 'src/storage/wallet_storage.dart';
