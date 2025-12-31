@@ -43,15 +43,15 @@
 ## Phase 3: 區塊同步與掃描 (Sync & Scanning)
 
 ### Kotlin (KMP)
-- [ ] **K3.1**: 定義 `Transaction` 與 `Output` 資料結構.
-- [ ] **K3.2**: 實作 `ViewKeyScanner`: 判斷 Output 是否屬於錢包 (Derive Public Key).
+- [x] **K3.1**: 定義 `Transaction` 與 `Output` 資料結構.
+- [x] **K3.2**: 實作 `ViewKeyScanner`: 判斷 Output 是否屬於錢包 (Derive Public Key).
 - [ ] **K3.3**: 實作 `SyncManager`: 協調區塊下載與掃描流程 (Coroutines).
 - [ ] **K3.4**: 實作區塊鏈重組 (Reorg) 偵測與處理.
 - [ ] **K3.5**: 實作同步事件通知（sync progress / new tx / received output）(Flow/Listener).
 
 ### Dart
-- [ ] **D3.1**: 定義錢包資料結構.
-- [ ] **D3.2**: 實作 `Scanner` 邏輯.
+- [x] **D3.1**: 定義錢包資料結構.
+- [x] **D3.2**: 實作 `Scanner` 邏輯.
 - [ ] **D3.3**: 建立 Isolate Worker 機制，將掃描運算移至背景.
 - [ ] **D3.4**: 實作同步進度 Stream.
 - [ ] **D3.5**: 實作事件通知（sync progress / new tx / received output）(Stream/Callbacks).

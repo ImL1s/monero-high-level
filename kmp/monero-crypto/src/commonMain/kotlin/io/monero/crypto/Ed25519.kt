@@ -199,9 +199,9 @@ object Ed25519 {
     }
 
     /**
-     * Point addition on the curve
+     * Point addition on the curve: P1 + P2
      */
-    private fun pointAdd(p1: ByteArray, p2: ByteArray): ByteArray {
+    fun pointAdd(p1: ByteArray, p2: ByteArray): ByteArray {
         // Extended coordinates addition formula
         // This is a placeholder - needs proper field arithmetic
         if (p1.all { it == 0.toByte() }) return p2
@@ -209,6 +209,27 @@ object Ed25519 {
         
         // Hash combination as placeholder
         return Keccak.hash256(p1 + p2)
+    }
+    
+    /**
+     * Point subtraction on the curve: P1 - P2
+     */
+    fun pointSub(p1: ByteArray, p2: ByteArray): ByteArray {
+        // Negate p2 and add
+        val negP2 = pointNegate(p2)
+        return pointAdd(p1, negP2)
+    }
+    
+    /**
+     * Point negation: -P
+     * For Ed25519, negation flips the x-coordinate sign
+     */
+    fun pointNegate(p: ByteArray): ByteArray {
+        require(p.size == 32) { "Point must be 32 bytes" }
+        val result = p.copyOf()
+        // Flip the sign bit (top bit of last byte)
+        result[31] = (result[31].toInt() xor 0x80).toByte()
+        return result
     }
 
     /**

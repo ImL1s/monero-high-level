@@ -32,6 +32,8 @@ export 'src/storage/wallet_storage.dart';
 // Transaction
 export 'src/transaction/builder.dart';
 export 'src/transaction/decoy_selection.dart';
+export 'src/transaction/models.dart';
+export 'src/transaction/scanner.dart';
 
 // Wallet
 export 'src/wallet/wallet.dart';

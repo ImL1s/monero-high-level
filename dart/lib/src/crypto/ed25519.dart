@@ -154,11 +154,54 @@ class Ed25519 {
 
   /// Reduce a 64-byte scalar modulo l
   static Uint8List scalarReduce(Uint8List scalar) {
+    if (scalar.length == 32) {
+      // Pad to 64 bytes
+      final padded = Uint8List(64);
+      padded.setRange(0, 32, scalar);
+      final s = _bytesToBigInt(padded);
+      return _bigIntToBytes(s % l, 32);
+    }
     if (scalar.length != 64) {
-      throw ArgumentError('Input must be 64 bytes');
+      throw ArgumentError('Input must be 32 or 64 bytes');
     }
     final s = _bytesToBigInt(scalar);
     return _bigIntToBytes(s % l, 32);
+  }
+
+  /// Scalar multiplication with bytes: result = scalar * point
+  static Uint8List scalarMultBytes(Uint8List scalar, Uint8List point) {
+    final scalarBigInt = _bytesToBigInt(scalar);
+    final pointObj = bytesToPoint(point);
+    final result = scalarMult(pointObj, scalarBigInt);
+    return pointToBytes(result);
+  }
+
+  /// Scalar multiplication by base point G with bytes
+  static Uint8List scalarMultBaseBytes(Uint8List scalar) {
+    final scalarBigInt = _bytesToBigInt(scalar);
+    final result = scalarMultBase(scalarBigInt);
+    return pointToBytes(result);
+  }
+
+  /// Point addition with bytes: P1 + P2
+  static Uint8List pointAddBytes(Uint8List p1, Uint8List p2) {
+    final point1 = bytesToPoint(p1);
+    final point2 = bytesToPoint(p2);
+    final result = pointAdd(point1, point2);
+    return pointToBytes(result);
+  }
+
+  /// Point subtraction with bytes: P1 - P2
+  static Uint8List pointSubBytes(Uint8List p1, Uint8List p2) {
+    final point1 = bytesToPoint(p1);
+    final point2 = pointNegate(bytesToPoint(p2));
+    final result = pointAdd(point1, point2);
+    return pointToBytes(result);
+  }
+
+  /// Point negation: -P
+  static Point pointNegate(Point p) {
+    return Point((Ed25519.p - p.x) % Ed25519.p, p.y);
   }
 
   /// Scalar multiplication: a * b mod l
