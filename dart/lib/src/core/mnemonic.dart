@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../crypto/keccak.dart';
 import '../constants.dart';
+import 'english_word_list.dart';
 
 /// Monero mnemonic seed operations.
 ///
@@ -156,21 +157,8 @@ class Mnemonic {
 
   static List<String> _getWordList(String language) {
     return switch (language.toLowerCase()) {
-      'english' => _englishWordList,
+      'english' => englishWordList,
       _ => throw ArgumentError('Unsupported language: $language'),
     };
   }
-
-  /// English word list (placeholder - full list in resources)
-  static const List<String> _englishWordList = [
-    'abbey',
-    'abducts',
-    'ability',
-    'ablaze',
-    'abnormal',
-    'abort',
-    'abrasive',
-    'absorb',
-    // ... 1626 words total - loaded from resources in production
-  ];
 }
