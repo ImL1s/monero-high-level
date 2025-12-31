@@ -31,8 +31,9 @@ void main() {
       expect(result1, equals(result2));
     });
 
-    test('abc test vector', () {
+    test('abc test vector (NIST ShortMsgKAT)', () {
       // Standard test vector: Keccak-256("abc")
+      // From NIST ShortMsgKAT_256.txt
       final input = Uint8List.fromList('abc'.codeUnits);
       final expected = _hexToBytes(
         '4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45',
@@ -43,7 +44,7 @@ void main() {
       expect(result, equals(expected));
     });
 
-    test('long input (> one block)', () {
+    test('long input (> one block 136 bytes)', () {
       // Test with input longer than one block (136 bytes for Keccak-256)
       final input = Uint8List.fromList(
         List.generate(200, (i) => i % 256),
@@ -62,6 +63,28 @@ void main() {
       expect(firstHash.length, equals(32));
       expect(secondHash.length, equals(32));
       expect(firstHash, equals(Keccak.hash256(seed)));
+    });
+
+    test('NIST hex message test vector', () {
+      // Message of 24 bits = 0x616263 (ASCII "abc")
+      final input = _hexToBytes('616263');
+      final expected = _hexToBytes(
+        '4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45',
+      );
+      expect(Keccak.hash256(input), equals(expected));
+    });
+
+    test('concatenated public keys pattern', () {
+      // Simulate concatenating two 32-byte public keys
+      final pubKey1 = Uint8List.fromList(List.filled(32, 0xAA));
+      final pubKey2 = Uint8List.fromList(List.filled(32, 0xBB));
+      final combined = Uint8List.fromList([...pubKey1, ...pubKey2]);
+
+      final hash = Keccak.hash256(combined);
+      expect(hash.length, equals(32));
+
+      // Hash of 64 bytes should be deterministic
+      expect(hash, equals(Keccak.hash256(combined)));
     });
   });
 }
