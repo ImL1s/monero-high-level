@@ -29,9 +29,9 @@
 ## Phase 2: 網路與 RPC (Network & RPC)
 
 ### Kotlin (KMP)
-- [ ] **K2.1**: 引入 Ktor Client.
-- [ ] **K2.2**: 定義 JSON-RPC Request/Response 資料模型 (`@Serializable`).
-- [ ] **K2.3**: 實作 `DaemonClient` (get_info, get_block, send_raw_transaction).
+- [x] **K2.1**: 引入 Ktor Client.
+- [x] **K2.2**: 定義 JSON-RPC Request/Response 資料模型 (`@Serializable`).
+- [x] **K2.3**: 實作 `DaemonClient` (get_info, get_block, send_raw_transaction).
 - [ ] **K2.4**: 撰寫連線測試 (連接 Stagenet 節點).
 
 ### Dart
