@@ -22,12 +22,9 @@ object Mnemonic {
     private const val WORD_LIST_SIZE = 1626
 
     /**
-     * English word list (first few words for structure - full list in resources)
+     * English word list (full 1626 words from EnglishWordList)
      */
-    private val ENGLISH_WORD_LIST = listOf(
-        "abbey", "abducts", "ability", "ablaze", "abnormal", "abort", "abrasive", "absorb",
-        // ... 1626 words total - loaded from resources in production
-    )
+    private val ENGLISH_WORD_LIST = EnglishWordList.words
 
     /**
      * Convert entropy to mnemonic words
@@ -163,9 +160,3 @@ object Mnemonic {
         }
     }
 }
-
-/**
- * Generate cryptographically secure random bytes.
- * Platform-specific implementation required.
- */
-expect fun generateSecureRandom(size: Int): ByteArray

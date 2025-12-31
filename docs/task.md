@@ -10,20 +10,20 @@
 ## Phase 1: 基礎建設與密碼學 (Foundation & Crypto)
 
 ### Kotlin (KMP)
-- [ ] **K1.1**: 建立 KMP 專案結構 (`monero-core`, `monero-crypto`, `monero-net`).
-- [ ] **K1.2**: 實作/整合大數運算庫 (BigInt).
-- [ ] **K1.3**: 實作 Keccak-256 (SHA-3) 哈希函數.
-- [ ] **K1.4**: 實作 Ed25519 基礎運算 (Scalar reduction, Point addition/multiplication).
-- [ ] **K1.5**: 實作 Base58Check 編碼與解碼.
-- [ ] **K1.6**: 實作助記詞 (Mnemonic) 轉換邏輯 (Seed <-> Mnemonic, Checksum).
-- [ ] **K1.7**: 實作金鑰衍生 (Seed -> Spend/View Keys) 與地址生成 (Standard/Subaddress).
+- [x] **K1.1**: 建立 KMP 專案結構 (`monero-core`, `monero-crypto`, `monero-net`).
+- [x] **K1.2**: 實作/整合大數運算庫 (BigInt). *(使用 ByteArray 純運算)*
+- [x] **K1.3**: 實作 Keccak-256 (SHA-3) 哈希函數.
+- [x] **K1.4**: 實作 Ed25519 基礎運算 (Scalar reduction, Point addition/multiplication).
+- [x] **K1.5**: 實作 Base58Check 編碼與解碼.
+- [x] **K1.6**: 實作助記詞 (Mnemonic) 轉換邏輯 (Seed <-> Mnemonic, Checksum).
+- [x] **K1.7**: 實作金鑰衍生 (Seed -> Spend/View Keys) 與地址生成 (Standard/Subaddress).
 
 ### Dart
-- [ ] **D1.1**: 建立 Dart Package 專案結構.
-- [ ] **D1.2**: 引入 `crypto`, `pointycastle` 或使用 `monero_dart` 作為基礎.
-- [ ] **D1.3**: 驗證 BigInt 效能與精度.
-- [ ] **D1.4**: 實作/驗證 Ed25519 與 Keccak 運算.
-- [ ] **D1.5**: 實作 Base58Check 與地址生成邏輯.
+- [x] **D1.1**: 建立 Dart Package 專案結構.
+- [x] **D1.2**: 引入 `crypto`, `pointycastle` 或使用 `monero_dart` 作為基礎.
+- [x] **D1.3**: 驗證 BigInt 效能與精度.
+- [x] **D1.4**: 實作/驗證 Ed25519 與 Keccak 運算.
+- [x] **D1.5**: 實作 Base58Check 與地址生成邏輯.
 - [ ] **D1.6**: 實作助記詞管理.
 
 ## Phase 2: 網路與 RPC (Network & RPC)
