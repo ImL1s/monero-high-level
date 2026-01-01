@@ -47,3 +47,4 @@ export 'src/sync/sync_manager.dart';
 
 // Wallet
 export 'src/wallet/wallet.dart' hide Network, OutputInfo;
+export 'src/wallet/wallet_manager.dart';
