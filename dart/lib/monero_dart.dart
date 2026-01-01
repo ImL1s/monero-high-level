@@ -35,5 +35,8 @@ export 'src/transaction/decoy_selection.dart';
 export 'src/transaction/models.dart';
 export 'src/transaction/scanner.dart';
 
+// Sync
+export 'src/sync/sync_manager.dart';
+
 // Wallet
 export 'src/wallet/wallet.dart';
