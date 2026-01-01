@@ -1,6 +1,7 @@
 package io.monero.wallet.addressbook
 
 import io.monero.wallet.storage.AddressBookEntry
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
 /**
@@ -92,7 +93,7 @@ class InMemoryAddressBook : AddressBook {
             label = label,
             description = description,
             paymentId = paymentId,
-            createdAt = System.currentTimeMillis()
+            createdAt = Clock.System.now().toEpochMilliseconds()
         )
         entries[id] = entry
         return entry

@@ -12,8 +12,8 @@ kotlin {
         }
     }
 
-    // Native targets disabled - requires BigInteger abstraction
-    // macosArm64 { ... }
+    macosArm64()
+    
     // iOS targets disabled for now - requires iOS SDK
     // listOf(iosX64(), iosArm64(), iosSimulatorArm64())...
 

@@ -312,5 +312,6 @@ class WalletManagerTest {
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun ByteArray.toHex(): String = toHexString()
 }

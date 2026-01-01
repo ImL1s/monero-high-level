@@ -3,7 +3,6 @@ import 'package:test/test.dart';
 import 'package:monero_dart/src/core/keys.dart';
 import 'package:monero_dart/src/core/address.dart';
 import 'package:monero_dart/src/core/mnemonic.dart';
-import 'package:monero_dart/src/crypto/keccak.dart';
 
 /// C4: Dart conformance tests against shared test vectors.
 ///

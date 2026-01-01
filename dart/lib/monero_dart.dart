@@ -27,11 +27,12 @@ export 'src/core/keys.dart';
 
 // Network
 export 'src/network/daemon_client.dart';
+export 'src/network/wallet_rpc_client.dart';
 export 'src/network/rpc_utils.dart';
 
 // Storage
 export 'src/storage/wallet_storage.dart' hide WalletStorage, KeyImageImportResult;
-export 'src/storage/file_wallet_storage.dart' hide WalletStorage;
+export 'src/storage/file_wallet_storage.dart';
 
 // Transaction
 export 'src/transaction/builder.dart';

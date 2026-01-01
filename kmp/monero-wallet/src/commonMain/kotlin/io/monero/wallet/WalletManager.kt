@@ -1,6 +1,6 @@
 package io.monero.wallet
 
-import java.math.BigInteger
+
 
 /**
  * Wallet type indicating available operations.
@@ -25,9 +25,9 @@ data class AccountInfo(
     /** Primary address for this account */
     val primaryAddress: String,
     /** Total balance (confirmed + unconfirmed) */
-    val balance: BigInteger,
+    val balance: Long,
     /** Unlocked (spendable) balance */
-    val unlockedBalance: BigInteger,
+    val unlockedBalance: Long,
     /** Number of subaddresses in this account */
     val subaddressCount: Int
 ) {
@@ -36,8 +36,8 @@ data class AccountInfo(
             index = index,
             label = if (index == 0) "Primary account" else "Account #$index",
             primaryAddress = "",
-            balance = BigInteger.ZERO,
-            unlockedBalance = BigInteger.ZERO,
+            balance = 0L,
+            unlockedBalance = 0L,
             subaddressCount = 1
         )
     }

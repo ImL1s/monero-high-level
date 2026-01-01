@@ -1,134 +1,50 @@
 package io.monero.crypto
 
 /**
- * Native Poly1305 implementation using 64-bit limb arithmetic.
+ * Native Poly1305 implementation using a simple BigInt class for 130-bit arithmetic.
  * 
- * Uses 3 x 64-bit limbs to represent 130-bit numbers in the field mod (2^130 - 5).
- * Limb layout: [0-43 bits, 44-87 bits, 88-129 bits]
+ * This mimics the JVM BigInteger-based implementation.
  */
 actual object Poly1305 {
-    
-    // 2^130 - 5 represented as limbs (not directly used, but conceptually)
-    // We use special reduction taking advantage of: 2^130 ≡ 5 (mod p)
-    
+
     actual fun mac(key: ByteArray, message: ByteArray): ByteArray {
         require(key.size == 32) { "Key must be 32 bytes, got ${key.size}" }
+
+        // Split key into r and s
+        val rBytes = clampR(key.copyOfRange(0, 16))
+        val sBytes = key.copyOfRange(16, 32)
         
-        // Parse r (first 16 bytes) and clamp
-        val r = clampR(key.copyOfRange(0, 16))
-        val s = key.copyOfRange(16, 32)
-        
-        // Convert r to limbs for multiplication
-        val rLimbs = bytesToLimbs(r)
-        
-        // Accumulator starts at 0
-        var h0: ULong = 0u
-        var h1: ULong = 0u
-        var h2: ULong = 0u
-        
-        // Pre-compute r * 5 for reduction
-        val r0 = rLimbs[0]
-        val r1 = rLimbs[1]
-        val r2 = rLimbs[2]
-        val s1 = r1 * 5u  // Used in reduction
-        val s2 = r2 * 5u
-        
+        val r = BigInt.fromBytesLE(rBytes)
+        val s = BigInt.fromBytesLE(sBytes)
+        val p = BigInt.P  // 2^130 - 5
+
+        var acc = BigInt.ZERO
+
         // Process message in 16-byte blocks
         var offset = 0
         while (offset < message.size) {
             val blockSize = minOf(16, message.size - offset)
-            val block = ByteArray(17)
+            val block = ByteArray(blockSize + 1)
             for (i in 0 until blockSize) {
                 block[i] = message[offset + i]
             }
             block[blockSize] = 0x01  // Add hibit
-            
-            // Convert block to limbs and add to accumulator
-            val nLimbs = bytesToLimbs17(block, blockSize + 1)
-            h0 += nLimbs[0]
-            h1 += nLimbs[1]
-            h2 += nLimbs[2]
-            
-            // Multiply by r with reduction mod 2^130 - 5
-            // Using schoolbook multiplication with 44-bit limbs
-            // d0 = h0*r0 + h1*s2 + h2*s1
-            // d1 = h0*r1 + h1*r0 + h2*s2
-            // d2 = h0*r2 + h1*r1 + h2*r0
-            
-            val d0 = mulAdd(h0, r0) + mulAdd(h1, s2) + mulAdd(h2, s1)
-            val d1 = mulAdd(h0, r1) + mulAdd(h1, r0) + mulAdd(h2, s2)
-            val d2 = mulAdd(h0, r2) + mulAdd(h1, r1) + mulAdd(h2, r0)
-            
-            // Carry and reduce
-            val mask44 = (1uL shl 44) - 1u
-            val mask42 = (1uL shl 42) - 1u
-            
-            var c: ULong
-            c = d0 shr 44
-            h0 = d0 and mask44
-            
-            val d1c = d1 + c
-            c = d1c shr 44
-            h1 = d1c and mask44
-            
-            val d2c = d2 + c
-            c = d2c shr 42
-            h2 = d2c and mask42
-            
-            // Reduce: c * 5 back into h0
-            h0 += c * 5u
-            c = h0 shr 44
-            h0 = h0 and mask44
-            h1 += c
-            
+
+            val n = BigInt.fromBytesLE(block)
+            acc = acc.add(n)
+            acc = acc.mul(r)
+            acc = acc.mod(p)
+
             offset += 16
         }
-        
-        // Final carry propagation
-        val mask44 = (1uL shl 44) - 1u
-        val mask42 = (1uL shl 42) - 1u
-        
-        var c = h1 shr 44
-        h1 = h1 and mask44
-        h2 += c
-        c = h2 shr 42
-        h2 = h2 and mask42
-        h0 += c * 5u
-        c = h0 shr 44
-        h0 = h0 and mask44
-        h1 += c
-        
-        // Compute h - p = h - (2^130 - 5)
-        // g = h + 5
-        var g0 = h0 + 5u
-        c = g0 shr 44
-        g0 = g0 and mask44
-        var g1 = h1 + c
-        c = g1 shr 44
-        g1 = g1 and mask44
-        var g2 = h2 + c - (1uL shl 42)  // subtract 2^130
-        
-        // If g2 has high bit set (negative), use h, else use g
-        val mask = (g2 shr 63) - 1u  // 0 if g >= p, all 1s if g < p
-        h0 = (h0 and mask.inv()) or (g0 and mask)
-        h1 = (h1 and mask.inv()) or (g1 and mask)
-        h2 = (h2 and mask.inv()) or (g2 and mask)
-        
-        // h = h + s (mod 2^128)
-        val sLimbs = bytesToLimbs(s)
-        h0 += sLimbs[0]
-        c = h0 shr 44
-        h0 = h0 and mask44
-        h1 += sLimbs[1] + c
-        c = h1 shr 44
-        h1 = h1 and mask44
-        h2 += sLimbs[2] + c
-        // Ignore overflow beyond 128 bits
-        
-        // Convert limbs back to 16 bytes (little-endian)
-        return limbsToBytes(h0, h1, h2)
+
+        // Add s
+        acc = acc.add(s)
+
+        // Take lower 128 bits (16 bytes)
+        return acc.toBytesLE(16)
     }
-    
+
     private fun clampR(r: ByteArray): ByteArray {
         val clamped = r.copyOf()
         clamped[3] = (clamped[3].toInt() and 0x0f).toByte()
@@ -141,130 +57,201 @@ actual object Poly1305 {
         return clamped
     }
     
-    // Convert 16 bytes to 3 limbs (44, 44, 42 bits)
-    private fun bytesToLimbs(bytes: ByteArray): ULongArray {
-        var v = 0uL
-        for (i in 0 until minOf(8, bytes.size)) {
-            v = v or ((bytes[i].toUByte().toULong()) shl (i * 8))
-        }
-        val l0 = v and ((1uL shl 44) - 1u)
+    /**
+     * Simple arbitrary precision integer for Poly1305.
+     * Only supports non-negative integers.
+     * Stores digits in base 2^32 (little-endian order: least significant first).
+     */
+    private class BigInt private constructor(private val digits: UIntArray) {
         
-        v = 0uL
-        for (i in 0 until 8) {
-            val idx = 5 + i
-            if (idx < bytes.size) {
-                v = v or ((bytes[idx].toUByte().toULong()) shl (i * 8))
+        companion object {
+            val ZERO = BigInt(uintArrayOf(0u))
+            
+            // 2^130 - 5
+            val P: BigInt by lazy {
+                // 2^130 = 2^128 * 4, represented in base 2^32
+                // 2^130 in base 2^32 is: [0, 0, 0, 0, 4] (5 digits)
+                // 2^130 - 5 is: [0xFFFFFFFB, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x3]
+                BigInt(uintArrayOf(0xFFFFFFFBu, 0xFFFFFFFFu, 0xFFFFFFFFu, 0xFFFFFFFFu, 0x3u))
+            }
+            
+            fun fromBytesLE(bytes: ByteArray): BigInt {
+                if (bytes.isEmpty()) return ZERO
+                
+                // Calculate number of 32-bit digits needed
+                val numDigits = (bytes.size + 3) / 4
+                val digits = UIntArray(numDigits)
+                
+                for (i in bytes.indices) {
+                    val digitIdx = i / 4
+                    val shift = (i % 4) * 8
+                    digits[digitIdx] = digits[digitIdx] or ((bytes[i].toUInt() and 0xFFu) shl shift)
+                }
+                
+                return BigInt(digits).normalize()
             }
         }
-        val l1 = (v shr 4) and ((1uL shl 44) - 1u)
         
-        v = 0uL
-        for (i in 0 until 6) {
-            val idx = 11 + i
-            if (idx < bytes.size) {
-                v = v or ((bytes[idx].toUByte().toULong()) shl (i * 8))
+        private fun normalize(): BigInt {
+            // Remove leading zeros
+            var len = digits.size
+            while (len > 1 && digits[len - 1] == 0u) len--
+            return if (len == digits.size) this else BigInt(digits.copyOf(len))
+        }
+        
+        fun isZero(): Boolean = digits.size == 1 && digits[0] == 0u
+        
+        fun add(other: BigInt): BigInt {
+            val maxLen = maxOf(digits.size, other.digits.size) + 1
+            val result = UIntArray(maxLen)
+            
+            var carry = 0uL
+            for (i in 0 until maxLen) {
+                val a = if (i < digits.size) digits[i].toULong() else 0uL
+                val b = if (i < other.digits.size) other.digits[i].toULong() else 0uL
+                val sum = a + b + carry
+                result[i] = sum.toUInt()
+                carry = sum shr 32
             }
+            
+            return BigInt(result).normalize()
         }
-        val l2 = v shr 0  // Already in position
         
-        return ulongArrayOf(l0, l1, l2 and ((1uL shl 42) - 1u))
-    }
-    
-    // Convert up to 17 bytes to 3 limbs
-    private fun bytesToLimbs17(bytes: ByteArray, len: Int): ULongArray {
-        // Read as little-endian 130-bit number
-        var l0 = 0uL
-        var l1 = 0uL
-        var l2 = 0uL
-        
-        // First 44 bits from bytes 0-5 (and partial byte 5)
-        for (i in 0 until minOf(6, len)) {
-            l0 = l0 or ((bytes[i].toUByte().toULong()) shl (i * 8))
-        }
-        l0 = l0 and ((1uL shl 44) - 1u)
-        
-        // Next 44 bits from bytes 5-11
-        var shift = 44
-        var byteIdx = 5
-        var bitPos = 4  // Start at bit 4 of byte 5
-        var acc = 0uL
-        for (b in 0 until 44) {
-            if (byteIdx < len) {
-                val bit = ((bytes[byteIdx].toUByte().toInt() shr bitPos) and 1).toULong()
-                acc = acc or (bit shl b)
+        fun mul(other: BigInt): BigInt {
+            if (isZero() || other.isZero()) return ZERO
+            
+            val result = UIntArray(digits.size + other.digits.size)
+            
+            for (i in digits.indices) {
+                var carry = 0uL
+                for (j in other.digits.indices) {
+                    val prod = digits[i].toULong() * other.digits[j].toULong() + 
+                               result[i + j].toULong() + carry
+                    result[i + j] = prod.toUInt()
+                    carry = prod shr 32
+                }
+                result[i + other.digits.size] = (result[i + other.digits.size].toULong() + carry).toUInt()
             }
-            bitPos++
-            if (bitPos == 8) {
-                bitPos = 0
-                byteIdx++
+            
+            return BigInt(result).normalize()
+        }
+        
+        fun mod(m: BigInt): BigInt {
+            if (compare(m) < 0) return this
+            
+            var remainder = this
+            
+            // Simple repeated subtraction with shifting
+            // Find the highest bit position of m
+            val mBits = m.bitLength()
+            val thisBits = remainder.bitLength()
+            
+            if (thisBits < mBits) return remainder
+            
+            var shift = thisBits - mBits
+            var divisor = m.shiftLeft(shift)
+            
+            while (shift >= 0) {
+                if (remainder.compare(divisor) >= 0) {
+                    remainder = remainder.subtract(divisor)
+                }
+                divisor = divisor.shiftRight(1)
+                shift--
             }
+            
+            return remainder.normalize()
         }
-        l1 = acc
         
-        // Remaining bits (up to 42) from bytes 11-16
-        byteIdx = 11
-        bitPos = 0
-        acc = 0uL
-        for (b in 0 until 42) {
-            if (byteIdx < len) {
-                val bit = ((bytes[byteIdx].toUByte().toInt() shr bitPos) and 1).toULong()
-                acc = acc or (bit shl b)
+        private fun compare(other: BigInt): Int {
+            if (digits.size != other.digits.size) {
+                return digits.size.compareTo(other.digits.size)
             }
-            bitPos++
-            if (bitPos == 8) {
-                bitPos = 0
-                byteIdx++
+            for (i in digits.size - 1 downTo 0) {
+                if (digits[i] != other.digits[i]) {
+                    return digits[i].compareTo(other.digits[i])
+                }
             }
-        }
-        l2 = acc
-        
-        return ulongArrayOf(l0, l1, l2)
-    }
-    
-    // Multiply two 64-bit values and return 128-bit result as pair
-    private inline fun mulAdd(a: ULong, b: ULong): ULong {
-        // For limbs up to 44 bits, product fits in 88 bits < 128 bits
-        // ULong can hold up to 64 bits, so we need to be careful
-        // Actually for 44-bit * 44-bit, result is 88 bits which doesn't fit in ULong
-        // We need to split the multiplication
-        
-        val a0 = a and 0xFFFFFFFFu
-        val a1 = a shr 32
-        val b0 = b and 0xFFFFFFFFu
-        val b1 = b shr 32
-        
-        val m00 = a0 * b0
-        val m01 = a0 * b1
-        val m10 = a1 * b0
-        val m11 = a1 * b1
-        
-        // This is simplified - for our use case, the sums won't overflow
-        // because r is clamped and h is bounded
-        return m00 + ((m01 + m10) shl 32) + (m11 shl 64)
-    }
-    
-    // Convert 3 limbs back to 16 bytes
-    private fun limbsToBytes(h0: ULong, h1: ULong, h2: ULong): ByteArray {
-        val result = ByteArray(16)
-        
-        // Reconstruct 128-bit value from limbs (44 + 44 + 40 bits used)
-        var v = h0  // bits 0-43
-        for (i in 0 until 6) {
-            result[i] = ((v shr (i * 8)) and 0xFFu).toByte()
+            return 0
         }
         
-        // Bytes 5-10 need bits from both h0 and h1
-        val combined = (h0 shr 40) or (h1 shl 4)
-        for (i in 5 until 11) {
-            result[i] = ((combined shr ((i - 5) * 8)) and 0xFFu).toByte()
+        private fun subtract(other: BigInt): BigInt {
+            // Assumes this >= other
+            val result = UIntArray(digits.size)
+            
+            var borrow = 0L
+            for (i in digits.indices) {
+                val a = digits[i].toLong()
+                val b = if (i < other.digits.size) other.digits[i].toLong() else 0L
+                val diff = a - b - borrow
+                if (diff < 0) {
+                    result[i] = (diff + 0x100000000L).toUInt()
+                    borrow = 1
+                } else {
+                    result[i] = diff.toUInt()
+                    borrow = 0
+                }
+            }
+            
+            return BigInt(result).normalize()
         }
         
-        // Bytes 11-15 from h1 and h2
-        val combined2 = (h1 shr 36) or (h2 shl 8)
-        for (i in 11 until 16) {
-            result[i] = ((combined2 shr ((i - 11) * 8)) and 0xFFu).toByte()
+        private fun bitLength(): Int {
+            if (isZero()) return 0
+            val topDigit = digits[digits.size - 1]
+            val topBits = 32 - topDigit.countLeadingZeroBits()
+            return (digits.size - 1) * 32 + topBits
         }
         
-        return result
+        private fun shiftLeft(n: Int): BigInt {
+            if (n == 0 || isZero()) return this
+            
+            val wordShift = n / 32
+            val bitShift = n % 32
+            
+            val newLen = digits.size + wordShift + 1
+            val result = UIntArray(newLen)
+            
+            for (i in digits.indices) {
+                result[i + wordShift] = result[i + wordShift] or (digits[i] shl bitShift)
+                if (bitShift > 0 && i + wordShift + 1 < newLen) {
+                    result[i + wordShift + 1] = result[i + wordShift + 1] or (digits[i] shr (32 - bitShift))
+                }
+            }
+            
+            return BigInt(result).normalize()
+        }
+        
+        private fun shiftRight(n: Int): BigInt {
+            if (n == 0 || isZero()) return this
+            
+            val wordShift = n / 32
+            val bitShift = n % 32
+            
+            if (wordShift >= digits.size) return ZERO
+            
+            val newLen = digits.size - wordShift
+            val result = UIntArray(newLen)
+            
+            for (i in result.indices) {
+                result[i] = digits[i + wordShift] shr bitShift
+                if (bitShift > 0 && i + wordShift + 1 < digits.size) {
+                    result[i] = result[i] or (digits[i + wordShift + 1] shl (32 - bitShift))
+                }
+            }
+            
+            return BigInt(result).normalize()
+        }
+        
+        fun toBytesLE(size: Int): ByteArray {
+            val result = ByteArray(size)
+            for (i in 0 until size) {
+                val digitIdx = i / 4
+                val shift = (i % 4) * 8
+                if (digitIdx < digits.size) {
+                    result[i] = ((digits[digitIdx] shr shift) and 0xFFu).toByte()
+                }
+            }
+            return result
+        }
     }
 }

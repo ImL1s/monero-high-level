@@ -3,12 +3,13 @@ package io.monero.wallet.transaction
 import io.monero.wallet.storage.TransactionDirection
 import io.monero.wallet.storage.TransactionRecord
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 import kotlin.test.*
 
 class TransactionQueryTest {
 
     private lateinit var history: InMemoryTransactionHistory
-    private val now = System.currentTimeMillis()
+    private val now = Clock.System.now().toEpochMilliseconds()
 
     @BeforeTest
     fun setup() {

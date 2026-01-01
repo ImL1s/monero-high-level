@@ -2,7 +2,7 @@ package io.monero.wallet
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import java.math.BigInteger
+
 
 /**
  * Main wallet interface for Monero operations.
@@ -206,12 +206,12 @@ data class WalletConfig(
  * Wallet balance
  */
 data class WalletBalance(
-    val balance: BigInteger,
-    val unlockedBalance: BigInteger,
-    val pendingBalance: BigInteger
+    val balance: Long,
+    val unlockedBalance: Long,
+    val pendingBalance: Long
 ) {
     companion object {
-        val ZERO = WalletBalance(BigInteger.ZERO, BigInteger.ZERO, BigInteger.ZERO)
+        val ZERO = WalletBalance(0L, 0L, 0L)
     }
 }
 
@@ -236,7 +236,7 @@ data class TxConfig(
     val paymentId: ByteArray? = null,
     val sweepAll: Boolean = false
 ) {
-    data class Destination(val address: String, val amount: BigInteger)
+    data class Destination(val address: String, val amount: Long)
 }
 
 /**
@@ -255,8 +255,8 @@ enum class TxPriority(val value: Int) {
  */
 interface PendingTransaction {
     val hash: String
-    val fee: BigInteger
-    val amount: BigInteger
+    val fee: Long
+    val amount: Long
     val blob: ByteArray
     val signed: Boolean
 }
@@ -269,8 +269,8 @@ data class SubaddressInfo(
     val addressIndex: Int,
     val address: String,
     val label: String,
-    val balance: BigInteger,
-    val unlockedBalance: BigInteger,
+    val balance: Long,
+    val unlockedBalance: Long,
     val used: Boolean
 )
 
@@ -281,8 +281,8 @@ data class TransactionInfo(
     val hash: String,
     val height: Long?,
     val timestamp: Long,
-    val fee: BigInteger,
-    val amount: BigInteger,
+    val fee: Long,
+    val amount: Long,
     val incoming: Boolean,
     val confirmations: Long,
     val accountIndex: Int,
@@ -297,7 +297,7 @@ data class TransactionInfo(
 data class OutputInfo(
     val keyImage: ByteArray,
     val publicKey: ByteArray,
-    val amount: BigInteger,
+    val amount: Long,
     val globalIndex: Long,
     val height: Long,
     val accountIndex: Int,
@@ -320,6 +320,6 @@ data class KeyImageExport(
  */
 data class KeyImageImportResult(
     val height: Long,
-    val spent: BigInteger,
-    val unspent: BigInteger
+    val spent: Long,
+    val unspent: Long
 )

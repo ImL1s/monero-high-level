@@ -8,7 +8,7 @@ import io.monero.wallet.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.math.BigInteger
+
 
 /**
  * Internal wallet state containing keys and derived data.
@@ -179,8 +179,8 @@ internal class InMemoryWallet(
                 addressIndex = sub.index,
                 address = deriveAddress(accountIndex, sub.index),
                 label = sub.label,
-                balance = BigInteger.ZERO, // Will be computed from UTXOs
-                unlockedBalance = BigInteger.ZERO,
+                balance = 0L, // Will be computed from UTXOs
+                unlockedBalance = 0L,
                 used = sub.used
             )
         }
@@ -199,8 +199,8 @@ internal class InMemoryWallet(
             addressIndex = newIndex,
             address = deriveAddress(accountIndex, newIndex),
             label = label,
-            balance = BigInteger.ZERO,
-            unlockedBalance = BigInteger.ZERO,
+            balance = 0L,
+            unlockedBalance = 0L,
             used = false
         )
     }
@@ -241,7 +241,7 @@ internal class InMemoryWallet(
     }
 
     override suspend fun importKeyImages(keyImages: List<KeyImageExport>): KeyImageImportResult {
-        return KeyImageImportResult(0, BigInteger.ZERO, BigInteger.ZERO)
+        return KeyImageImportResult(0, 0L, 0L)
     }
 
     override suspend fun close() {

@@ -3,7 +3,7 @@ package io.monero.wallet.internal
 import io.monero.core.Mnemonic
 import io.monero.core.MoneroAddress
 import io.monero.wallet.*
-import java.math.BigInteger
+
 
 /**
  * Default implementation of WalletManager, AccountManager, and SubaddressManager.
@@ -140,8 +140,8 @@ class DefaultWalletManager : WalletManager, AccountManager, SubaddressManager {
                 index = account.index,
                 label = account.label,
                 primaryAddress = wallet.getAddress(account.index, 0),
-                balance = BigInteger.ZERO, // Will be computed from UTXOs
-                unlockedBalance = BigInteger.ZERO,
+                balance = 0L, // Will be computed from UTXOs
+                unlockedBalance = 0L,
                 subaddressCount = account.subaddresses.size
             )
         }
@@ -158,8 +158,8 @@ class DefaultWalletManager : WalletManager, AccountManager, SubaddressManager {
             index = account.index,
             label = account.label,
             primaryAddress = wallet.getAddress(accountIndex, 0),
-            balance = BigInteger.ZERO,
-            unlockedBalance = BigInteger.ZERO,
+            balance = 0L,
+            unlockedBalance = 0L,
             subaddressCount = account.subaddresses.size
         )
     }
@@ -177,8 +177,8 @@ class DefaultWalletManager : WalletManager, AccountManager, SubaddressManager {
             index = newIndex,
             label = newLabel,
             primaryAddress = wallet.getAddress(newIndex, 0),
-            balance = BigInteger.ZERO,
-            unlockedBalance = BigInteger.ZERO,
+            balance = 0L,
+            unlockedBalance = 0L,
             subaddressCount = 1
         )
     }

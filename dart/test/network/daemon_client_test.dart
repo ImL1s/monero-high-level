@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:test/test.dart';
 import 'package:monero_dart/src/network/daemon_client.dart';
 

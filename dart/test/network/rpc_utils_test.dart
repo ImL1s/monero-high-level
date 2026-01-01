@@ -130,7 +130,7 @@ void main() {
       expect(breaker.state, CircuitState.open);
       
       // Wait for reset timeout
-      await Future.delayed(const Duration(milliseconds: 60));
+      await Future<void>.delayed(const Duration(milliseconds: 60));
       
       expect(breaker.allowRequest(), true);
       expect(breaker.state, CircuitState.halfOpen);
@@ -145,7 +145,7 @@ void main() {
       breaker.recordFailure();
       breaker.recordFailure();
       
-      await Future.delayed(const Duration(milliseconds: 60));
+      await Future<void>.delayed(const Duration(milliseconds: 60));
       breaker.allowRequest(); // Transition to half-open
       
       breaker.recordSuccess();
