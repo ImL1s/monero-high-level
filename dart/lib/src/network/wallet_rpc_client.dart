@@ -189,6 +189,50 @@ class WalletRpcClient {
     return SignMultisigResult.fromJson(result);
   }
 
+  /// Returns the wallet-rpc version information.
+  Future<GetVersionResult> getVersion() async {
+    final result = await _jsonRpc('get_version');
+    return GetVersionResult.fromJson(result);
+  }
+
+  /// Creates a new wallet file inside the wallet-rpc `--wallet-dir`.
+  ///
+  /// This works well with `monero-wallet-rpc --offline` for quick E2E tests.
+  Future<void> createWallet({
+    required String filename,
+    required String password,
+    String language = 'English',
+  }) async {
+    await _jsonRpc('create_wallet', {
+      'filename': filename,
+      'password': password,
+      'language': language,
+    });
+  }
+
+  /// Opens an existing wallet file inside the wallet-rpc `--wallet-dir`.
+  Future<void> openWallet({
+    required String filename,
+    required String password,
+  }) async {
+    await _jsonRpc('open_wallet', {
+      'filename': filename,
+      'password': password,
+    });
+  }
+
+  /// Returns the primary address for an account.
+  Future<GetAddressResult> getAddress({
+    int accountIndex = 0,
+    List<int>? addressIndex,
+  }) async {
+    final result = await _jsonRpc('get_address', {
+      'account_index': accountIndex,
+      if (addressIndex != null) 'address_index': addressIndex,
+    });
+    return GetAddressResult.fromJson(result);
+  }
+
   Future<Map<String, dynamic>> _jsonRpc(String method,
       [Map<String, dynamic>? params]) async {
     _checkCircuitBreaker();
@@ -356,5 +400,25 @@ class SignMultisigResult {
   factory SignMultisigResult.fromJson(Map<String, dynamic> json) => SignMultisigResult(
         txDataHex: json['tx_data_hex'] as String? ?? '',
         txHashList: (json['tx_hash_list'] as List?)?.cast<String>() ?? const [],
+      );
+}
+
+class GetVersionResult {
+  final int version;
+
+  const GetVersionResult({required this.version});
+
+  factory GetVersionResult.fromJson(Map<String, dynamic> json) => GetVersionResult(
+        version: json['version'] as int? ?? 0,
+      );
+}
+
+class GetAddressResult {
+  final String address;
+
+  const GetAddressResult({required this.address});
+
+  factory GetAddressResult.fromJson(Map<String, dynamic> json) => GetAddressResult(
+        address: json['address'] as String? ?? '',
       );
 }

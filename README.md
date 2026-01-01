@@ -66,6 +66,10 @@ dart pub get
 
 # Run tests
 dart test
+
+# Optional: E2E against a real monero-wallet-rpc (offline)
+brew install monero
+MONERO_E2E=1 dart test test/e2e/wallet_rpc_e2e_test.dart
 ```
 
 ## 📦 Modules
