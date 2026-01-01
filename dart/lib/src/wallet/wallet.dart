@@ -5,9 +5,6 @@ library;
 
 import 'dart:typed_data';
 
-import '../network/daemon_client.dart';
-import '../storage/wallet_storage.dart';
-
 /// Network type enumeration
 enum Network { mainnet, stagenet, testnet }
 

@@ -9,7 +9,6 @@ import 'dart:typed_data';
 /// Reference: https://keccak.team/keccak.html
 class Keccak {
   static const int _rate = 1088 ~/ 8; // 136 bytes for Keccak-256
-  static const int _capacity = 512 ~/ 8; // 64 bytes
   static const int _outputLength = 256 ~/ 8; // 32 bytes
 
   /// Round constants for Keccak-f[1600]

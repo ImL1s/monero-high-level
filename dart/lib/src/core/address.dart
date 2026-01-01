@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import '../crypto/base58.dart';
-import '../crypto/keccak.dart';
 import '../constants.dart';
 
 /// Network type enumeration.
@@ -53,6 +52,9 @@ enum AddressType {
 class MoneroAddress {
   /// Raw Base58 encoded address string
   final String rawAddress;
+
+  /// Base58 encoded address string.
+  String get address => rawAddress;
 
   /// Network type
   final Network network;

@@ -39,6 +39,8 @@ export 'src/transaction/input_selection.dart';
 export 'src/transaction/models.dart' hide TxInput, TxOutput;
 export 'src/transaction/scanner.dart';
 export 'src/transaction/offline_signing.dart';
+export 'src/transaction/serializer.dart';
+export 'src/transaction/tx_builder.dart';
 
 // Sync
 export 'src/sync/sync_manager.dart';

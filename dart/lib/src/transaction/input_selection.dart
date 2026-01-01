@@ -6,7 +6,6 @@ library;
 import 'dart:math';
 
 import '../constants.dart';
-import 'models.dart';
 
 /// Spendable output (UTXO) in the wallet.
 class SpendableOutput {
@@ -24,6 +23,11 @@ class SpendableOutput {
 
   /// One-time public key (stealth address)
   final String publicKey;
+
+  /// Output commitment (optional, hex-encoded)
+  ///
+  /// For RingCT outputs this is the Pedersen commitment used in ring members.
+  final String? commitment;
 
   /// Block height when confirmed
   final int blockHeight;
@@ -49,6 +53,7 @@ class SpendableOutput {
     required this.globalIndex,
     required this.amount,
     required this.publicKey,
+    this.commitment,
     required this.blockHeight,
     this.subaddressMajor = 0,
     this.subaddressMinor = 0,
@@ -135,11 +140,29 @@ class SelectionConfig {
   SelectionConfig({
     this.maxInputs = 16,
     this.minConfirmations = 10,
-    required this.currentHeight,
+    this.currentHeight = 0,
     BigInt? feePerByte,
     this.ringSize = MoneroConstants.ringSize,
     this.numOutputs = 2,
   }) : feePerByte = feePerByte ?? BigInt.from(20000);
+
+  SelectionConfig copyWith({
+    int? maxInputs,
+    int? minConfirmations,
+    int? currentHeight,
+    BigInt? feePerByte,
+    int? ringSize,
+    int? numOutputs,
+  }) {
+    return SelectionConfig(
+      maxInputs: maxInputs ?? this.maxInputs,
+      minConfirmations: minConfirmations ?? this.minConfirmations,
+      currentHeight: currentHeight ?? this.currentHeight,
+      feePerByte: feePerByte ?? this.feePerByte,
+      ringSize: ringSize ?? this.ringSize,
+      numOutputs: numOutputs ?? this.numOutputs,
+    );
+  }
 }
 
 /// Selects transaction inputs (UTXOs) based on various strategies.

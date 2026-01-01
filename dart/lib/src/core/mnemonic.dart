@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import '../crypto/keccak.dart';
 import '../constants.dart';
 import 'english_word_list.dart';
 

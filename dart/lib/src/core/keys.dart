@@ -59,6 +59,18 @@ class MoneroKeys {
     );
   }
 
+  /// Create keys from a 32-byte seed.
+  ///
+  /// Monero treats the seed as a private spend key after reducing it mod l.
+  factory MoneroKeys.fromSeed(Uint8List seed) {
+    if (seed.length != 32) {
+      throw ArgumentError('Seed must be 32 bytes');
+    }
+
+    final reduced = Ed25519.scalarReduce(Uint8List(64)..setRange(0, 32, seed));
+    return MoneroKeys.fromSpendKey(reduced);
+  }
+
   /// Create view-only keys (no private spend key).
   factory MoneroKeys.viewOnly({
     required Uint8List privateViewKey,
@@ -124,6 +136,12 @@ class MoneroKeys {
     return (subSpendKey, subViewKey);
   }
 
+  /// Convenience wrapper returning only the public subaddress keys.
+  SubaddressKeys deriveSubaddress(int accountIndex, int addressIndex) {
+    final (spend, view) = deriveSubaddressKeys(accountIndex, addressIndex);
+    return SubaddressKeys(publicSpendKey: spend, publicViewKey: view);
+  }
+
   static BigInt _bytesToBigInt(Uint8List bytes) {
     var result = BigInt.zero;
     for (var i = bytes.length - 1; i >= 0; i--) {
@@ -131,4 +149,15 @@ class MoneroKeys {
     }
     return result;
   }
+}
+
+/// Public subaddress keys.
+class SubaddressKeys {
+  final Uint8List publicSpendKey;
+  final Uint8List publicViewKey;
+
+  const SubaddressKeys({
+    required this.publicSpendKey,
+    required this.publicViewKey,
+  });
 }

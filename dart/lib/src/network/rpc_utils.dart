@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:dio/dio.dart';
 
@@ -156,13 +155,13 @@ class RetryInterceptor extends Interceptor {
     }
     
     final delay = _calculateDelay(attempt);
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     
     try {
       final options = err.requestOptions;
       options.extra['attempt'] = attempt + 1;
       
-      final response = await dio.fetch(options);
+      final response = await dio.fetch<dynamic>(options);
       return handler.resolve(response);
     } on DioException catch (e) {
       return handler.next(e);

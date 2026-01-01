@@ -70,13 +70,13 @@
 - [x] **K4.9**: 離線簽名格式：export unsigned / import signed / relay.
 
 ### Dart
-- [ ] **D4.1**: 移植/實作 UTXO 選擇與 Decoy 獲取.
-- [ ] **D4.2**: 實作/驗證 Bulletproofs+ (參考 `monero_dart`).
-- [ ] **D4.3**: 實作/驗證 CLSAG.
-- [ ] **D4.4**: 實作交易序列化.
-- [ ] **D4.5**: 實作 `TxBuilder`.
+- [x] **D4.1**: 移植/實作 UTXO 選擇與 Decoy 獲取.
+- [x] **D4.2**: 實作/驗證 Bulletproofs+ (參考 `monero_dart`).
+- [x] **D4.3**: 實作/驗證 CLSAG.
+- [x] **D4.4**: 實作交易序列化.
+- [x] **D4.5**: 實作 `TxBuilder`.
 - [ ] **D4.6**: 支援常用交易類型：一般轉帳、批次轉帳、sweep/sweep_all（視需求分批完成）。
-- [ ] **D4.7**: 離線簽名格式：export unsigned / import signed / relay.
+- [x] **D4.7**: 離線簽名格式：export unsigned / import signed / relay.
 
 ## Phase 5: 儲存與進階功能 (Storage & Advanced)
 

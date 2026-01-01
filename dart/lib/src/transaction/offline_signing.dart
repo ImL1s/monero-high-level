@@ -6,8 +6,6 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'models.dart';
-
 /// Exportable unsigned transaction data.
 class UnsignedTxExport {
   /// Version of this export format

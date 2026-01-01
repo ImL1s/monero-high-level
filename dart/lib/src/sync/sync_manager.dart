@@ -347,7 +347,7 @@ class SyncManager {
       
       // Small delay between batches
       if (_config.batchDelayMs > 0 && currentHeight <= targetHeight) {
-        await Future.delayed(Duration(milliseconds: _config.batchDelayMs));
+        await Future<void>.delayed(Duration(milliseconds: _config.batchDelayMs));
       }
     }
     
@@ -442,7 +442,7 @@ class SyncManager {
     
     if (_config.autoRetry && _retryCount < _config.maxRetries) {
       _retryCount++;
-      await Future.delayed(Duration(milliseconds: _config.retryDelayMs));
+      await Future<void>.delayed(Duration(milliseconds: _config.retryDelayMs));
       if (_isRunning) {
         await start();
       }
