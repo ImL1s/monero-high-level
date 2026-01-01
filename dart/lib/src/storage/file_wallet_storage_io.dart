@@ -376,6 +376,22 @@ class FileWalletStorage implements WalletStorage {
   }
 
   @override
+  Future<AddressBookEntry?> getAddressBookEntry(int id) async {
+    _requireOpen();
+    return _addressBookById[id];
+  }
+
+  @override
+  Future<void> updateAddressBookEntry(AddressBookEntry entry) async {
+    _requireOpen();
+    if (!_addressBookById.containsKey(entry.id)) {
+      throw StateError('Address book entry not found: ${entry.id}');
+    }
+    _addressBookById[entry.id] = entry;
+    await _persist();
+  }
+
+  @override
   Future<void> deleteAddressBookEntry(int id) async {
     _requireOpen();
     _addressBookById.remove(id);
@@ -397,6 +413,19 @@ class FileWalletStorage implements WalletStorage {
   Future<String?> getTxNote(Uint8List txHash) async {
     _requireOpen();
     return _txNotesByHash[_bytesToHex(txHash)];
+  }
+
+  @override
+  Future<void> deleteTxNote(Uint8List txHash) async {
+    _requireOpen();
+    _txNotesByHash.remove(_bytesToHex(txHash));
+    await _persist();
+  }
+
+  @override
+  Future<Map<String, String>> getAllTxNotes() async {
+    _requireOpen();
+    return Map.unmodifiable(_txNotesByHash);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

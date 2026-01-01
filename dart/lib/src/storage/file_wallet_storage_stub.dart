@@ -67,6 +67,12 @@ class FileWalletStorage implements WalletStorage {
   Future<void> deleteOutput(Uint8List keyImage) => Future.value();
 
   @override
+  Future<void> freezeOutput(Uint8List keyImage) => Future.value();
+
+  @override
+  Future<void> thawOutput(Uint8List keyImage) => Future.value();
+
+  @override
   Future<void> saveTransaction(StoredTransaction tx) => Future.error(
         UnsupportedError('FileWalletStorage is only supported on IO platforms'),
       );
@@ -107,6 +113,12 @@ class FileWalletStorage implements WalletStorage {
   Future<List<AddressBookEntry>> getAddressBook() => Future.value(const []);
 
   @override
+  Future<AddressBookEntry?> getAddressBookEntry(int id) => Future.value(null);
+
+  @override
+  Future<void> updateAddressBookEntry(AddressBookEntry entry) => Future.value();
+
+  @override
   Future<void> deleteAddressBookEntry(int id) => Future.value();
 
   @override
@@ -114,4 +126,10 @@ class FileWalletStorage implements WalletStorage {
 
   @override
   Future<String?> getTxNote(Uint8List txHash) => Future.value(null);
+
+  @override
+  Future<void> deleteTxNote(Uint8List txHash) => Future.value();
+
+  @override
+  Future<Map<String, String>> getAllTxNotes() => Future.value(const {});
 }

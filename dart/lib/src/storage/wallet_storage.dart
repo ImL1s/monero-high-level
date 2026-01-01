@@ -55,11 +55,15 @@ abstract class WalletStorage {
   // Address book
   Future<int> addAddressBookEntry(AddressBookEntry entry);
   Future<List<AddressBookEntry>> getAddressBook();
+  Future<AddressBookEntry?> getAddressBookEntry(int id);
+  Future<void> updateAddressBookEntry(AddressBookEntry entry);
   Future<void> deleteAddressBookEntry(int id);
 
   // Transaction notes
   Future<void> setTxNote(Uint8List txHash, String note);
   Future<String?> getTxNote(Uint8List txHash);
+  Future<void> deleteTxNote(Uint8List txHash);
+  Future<Map<String, String>> getAllTxNotes();
 }
 
 /// Encrypted keys container
