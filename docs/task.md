@@ -84,21 +84,21 @@
 - [x] **K5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
 - [x] **K5.1**: 實作 `WalletStorage` (SQLDelight 或 File).
 - [x] **K5.2**: 實作錢包檔案加密 (ChaCha20-Poly1305).
-- [ ] **K5.3**: 實作多重簽名 (Multisig) 流程 (Optional).
+- [x] **K5.3**: 實作多重簽名 (Multisig) 流程 (Optional).
 - [x] **K5.4**: 交易/轉帳/輸出查詢 API（依 hash/方向/確認狀態/account/subaddress）.
 - [x] **K5.5**: Address Book + Tx Notes（新增/刪除/查詢/更新）.
 - [x] **K5.6**: Outputs 管理：freeze/thaw、匯出/匯入 outputs 與 key images（支援 view-only/offline 交換）.
-- [ ] **K5.7**: 證明工具（tx proof / reserve proof / message sign/verify）(Optional).
+- [x] **K5.7**: 證明工具（tx proof / reserve proof / message sign/verify）(Optional).
 
 ### Dart
 - [x] **D5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
 - [x] **D5.1**: 實作本地儲存 (Hive, SQLite, or File).
 - [x] **D5.2**: 實作錢包加密保存.
-- [ ] **D5.3**: 實作多重簽名支援 (Optional).
+- [x] **D5.3**: 實作多重簽名支援 (Optional).
 - [x] **D5.4**: 交易/轉帳/輸出查詢 API（依 hash/方向/確認狀態/account/subaddress）.
 - [x] **D5.5**: Address Book + Tx Notes（新增/刪除/查詢/更新）.
 - [x] **D5.6**: Outputs 管理：freeze/thaw、匯出/匯入 outputs 與 key images（支援 view-only/offline 交換）.
-- [ ] **D5.7**: 證明工具（tx proof / reserve proof / message sign/verify）(Optional).
+- [x] **D5.7**: 證明工具（tx proof / reserve proof / message sign/verify）(Optional).
 
 ## Phase 6: 整合與測試 (Integration & Testing)
 

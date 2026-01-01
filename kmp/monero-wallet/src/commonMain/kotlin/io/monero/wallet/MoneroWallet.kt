@@ -146,6 +146,147 @@ interface MoneroWallet {
      */
     suspend fun importKeyImages(keyImages: List<KeyImageExport>): KeyImageImportResult
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Proof Tools (K5.7 / D5.7)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Get a proof for a transaction sent to a specific address.
+     *
+     * @param txHash Transaction hash
+     * @param address Destination address
+     * @param message Optional message to include in proof
+     * @return Proof signature string
+     */
+    suspend fun getTxProof(txHash: String, address: String, message: String? = null): String
+
+    /**
+     * Verify a transaction proof.
+     *
+     * @param txHash Transaction hash
+     * @param address Address the proof is for
+     * @param signature Proof signature
+     * @param message Optional message (must match what was used to generate proof)
+     * @return Verification result
+     */
+    suspend fun checkTxProof(
+        txHash: String,
+        address: String,
+        signature: String,
+        message: String? = null
+    ): TxProofResult
+
+    /**
+     * Get a reserve proof showing wallet owns a certain amount.
+     *
+     * @param all If true, proves entire balance; if false, prove specific amount
+     * @param accountIndex Account index (used when all=false)
+     * @param amount Amount to prove (used when all=false)
+     * @param message Optional message to include
+     * @return Proof signature string
+     */
+    suspend fun getReserveProof(
+        all: Boolean = true,
+        accountIndex: Int? = null,
+        amount: Long? = null,
+        message: String? = null
+    ): String
+
+    /**
+     * Verify a reserve proof.
+     *
+     * @param address Address that generated the proof
+     * @param signature Proof signature
+     * @param message Optional message (must match what was used to generate proof)
+     * @return Verification result
+     */
+    suspend fun checkReserveProof(
+        address: String,
+        signature: String,
+        message: String? = null
+    ): ReserveProofResult
+
+    /**
+     * Sign an arbitrary message with wallet's spend key.
+     *
+     * @param message Message to sign
+     * @return Signature string
+     */
+    suspend fun signMessage(message: String): String
+
+    /**
+     * Verify a message signature.
+     *
+     * @param message Original message
+     * @param address Address that signed the message
+     * @param signature Signature to verify
+     * @return true if signature is valid
+     */
+    suspend fun verifyMessage(message: String, address: String, signature: String): Boolean
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Multisig (K5.3 / D5.3)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Check if wallet is multisig.
+     */
+    suspend fun isMultisig(): MultisigStatus
+
+    /**
+     * Prepare wallet for multisig. First step of multisig setup.
+     *
+     * @return Multisig info string to share with other participants
+     */
+    suspend fun prepareMultisig(): String
+
+    /**
+     * Make wallet multisig using info from other participants.
+     *
+     * @param multisigInfos Multisig info strings from all participants
+     * @param threshold Number of signatures required
+     * @return Result with new address and optional extra info for additional rounds
+     */
+    suspend fun makeMultisig(multisigInfos: List<String>, threshold: Int): MultisigMakeResult
+
+    /**
+     * Exchange multisig keys (for N-of-N or additional rounds).
+     *
+     * @param multisigInfo Multisig info from other participant
+     * @param force Force update (use with caution)
+     * @return Result with address and optional extra info
+     */
+    suspend fun exchangeMultisigKeys(multisigInfo: String, force: Boolean = false): MultisigMakeResult
+
+    /**
+     * Export multisig info for syncing with other participants.
+     */
+    suspend fun exportMultisigInfo(): String
+
+    /**
+     * Import multisig info from other participants.
+     *
+     * @param infos Multisig info strings from other participants
+     * @return Number of outputs imported
+     */
+    suspend fun importMultisigInfo(infos: List<String>): Int
+
+    /**
+     * Sign a multisig transaction.
+     *
+     * @param txDataHex Transaction data from another participant
+     * @return Signed transaction result
+     */
+    suspend fun signMultisigTx(txDataHex: String): MultisigSignResult
+
+    /**
+     * Submit a multisig transaction that has enough signatures.
+     *
+     * @param txDataHex Fully signed transaction data
+     * @return List of transaction hashes
+     */
+    suspend fun submitMultisigTx(txDataHex: String): List<String>
+
     /**
      * Close wallet and release resources
      */
@@ -322,4 +463,68 @@ data class KeyImageImportResult(
     val height: Long,
     val spent: Long,
     val unspent: Long
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Proof & Multisig Result Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Transaction proof verification result.
+ */
+data class TxProofResult(
+    /** Whether the proof is valid */
+    val good: Boolean,
+    /** Amount received (in atomic units) */
+    val received: Long,
+    /** Number of confirmations (0 if in pool) */
+    val confirmations: Long,
+    /** Whether transaction is in the mempool */
+    val inPool: Boolean
+)
+
+/**
+ * Reserve proof verification result.
+ */
+data class ReserveProofResult(
+    /** Whether the proof is valid */
+    val good: Boolean,
+    /** Total amount proven (in atomic units) */
+    val total: Long,
+    /** Amount already spent from the proven outputs */
+    val spent: Long
+)
+
+/**
+ * Multisig wallet status.
+ */
+data class MultisigStatus(
+    /** Whether wallet is multisig */
+    val isMultisig: Boolean,
+    /** Whether multisig setup is complete and ready */
+    val isReady: Boolean,
+    /** Threshold (M in M-of-N) */
+    val threshold: Int,
+    /** Total participants (N in M-of-N) */
+    val total: Int
+)
+
+/**
+ * Result of makeMultisig or exchangeMultisigKeys.
+ */
+data class MultisigMakeResult(
+    /** Multisig wallet address (may be empty if more rounds needed) */
+    val address: String,
+    /** Multisig info for next round (empty if setup complete) */
+    val multisigInfo: String
+)
+
+/**
+ * Result of signing a multisig transaction.
+ */
+data class MultisigSignResult(
+    /** Signed transaction data (hex) for submission or next signer */
+    val txDataHex: String,
+    /** Transaction hashes if fully signed */
+    val txHashList: List<String>
 )

@@ -224,6 +224,100 @@ class KeyImageImportResult {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Proof & Multisig Result Types (D5.7 / D5.3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Transaction proof verification result.
+class TxProofResult {
+  /// Whether the proof is valid
+  final bool good;
+
+  /// Amount received (in atomic units)
+  final BigInt received;
+
+  /// Number of confirmations (0 if in pool)
+  final int confirmations;
+
+  /// Whether transaction is in the mempool
+  final bool inPool;
+
+  const TxProofResult({
+    required this.good,
+    required this.received,
+    required this.confirmations,
+    required this.inPool,
+  });
+}
+
+/// Reserve proof verification result.
+class ReserveProofResult {
+  /// Whether the proof is valid
+  final bool good;
+
+  /// Total amount proven (in atomic units)
+  final BigInt total;
+
+  /// Amount already spent from the proven outputs
+  final BigInt spent;
+
+  const ReserveProofResult({
+    required this.good,
+    required this.total,
+    required this.spent,
+  });
+}
+
+/// Multisig wallet status.
+class MultisigStatus {
+  /// Whether wallet is multisig
+  final bool isMultisig;
+
+  /// Whether multisig setup is complete and ready
+  final bool isReady;
+
+  /// Threshold (M in M-of-N)
+  final int threshold;
+
+  /// Total participants (N in M-of-N)
+  final int total;
+
+  const MultisigStatus({
+    required this.isMultisig,
+    required this.isReady,
+    required this.threshold,
+    required this.total,
+  });
+}
+
+/// Result of makeMultisig or exchangeMultisigKeys.
+class MultisigMakeResult {
+  /// Multisig wallet address (may be empty if more rounds needed)
+  final String address;
+
+  /// Multisig info for next round (empty if setup complete)
+  final String multisigInfo;
+
+  const MultisigMakeResult({
+    required this.address,
+    required this.multisigInfo,
+  });
+}
+
+/// Result of signing a multisig transaction.
+class MultisigSignResult {
+  /// Signed transaction data (hex) for submission or next signer
+  final String txDataHex;
+
+  /// Transaction hashes if fully signed
+  final List<String> txHashList;
+
+  const MultisigSignResult({
+    required this.txDataHex,
+    required this.txHashList,
+  });
+}
+
 /// Main wallet interface for Monero operations.
 abstract class MoneroWallet {
   /// Primary wallet address
@@ -301,6 +395,112 @@ abstract class MoneroWallet {
 
   /// Import key images
   Future<KeyImageImportResult> importKeyImages(List<KeyImageExport> keyImages);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Proof Tools (D5.7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Get a proof for a transaction sent to a specific address.
+  ///
+  /// [txHash] Transaction hash
+  /// [address] Destination address
+  /// [message] Optional message to include in proof
+  /// Returns proof signature string
+  Future<String> getTxProof(String txHash, String address, {String? message});
+
+  /// Verify a transaction proof.
+  ///
+  /// [txHash] Transaction hash
+  /// [address] Address the proof is for
+  /// [signature] Proof signature
+  /// [message] Optional message (must match what was used to generate proof)
+  Future<TxProofResult> checkTxProof(
+    String txHash,
+    String address,
+    String signature, {
+    String? message,
+  });
+
+  /// Get a reserve proof showing wallet owns a certain amount.
+  ///
+  /// [all] If true, proves entire balance; if false, prove specific amount
+  /// [accountIndex] Account index (used when all=false)
+  /// [amount] Amount to prove (used when all=false)
+  /// [message] Optional message to include
+  Future<String> getReserveProof({
+    bool all = true,
+    int? accountIndex,
+    BigInt? amount,
+    String? message,
+  });
+
+  /// Verify a reserve proof.
+  ///
+  /// [address] Address that generated the proof
+  /// [signature] Proof signature
+  /// [message] Optional message (must match what was used to generate proof)
+  Future<ReserveProofResult> checkReserveProof(
+    String address,
+    String signature, {
+    String? message,
+  });
+
+  /// Sign an arbitrary message with wallet's spend key.
+  Future<String> signMessage(String message);
+
+  /// Verify a message signature.
+  ///
+  /// [message] Original message
+  /// [address] Address that signed the message
+  /// [signature] Signature to verify
+  Future<bool> verifyMessage(String message, String address, String signature);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Multisig (D5.3)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Check if wallet is multisig.
+  Future<MultisigStatus> isMultisig();
+
+  /// Prepare wallet for multisig. First step of multisig setup.
+  /// Returns multisig info string to share with other participants.
+  Future<String> prepareMultisig();
+
+  /// Make wallet multisig using info from other participants.
+  ///
+  /// [multisigInfos] Multisig info strings from all participants
+  /// [threshold] Number of signatures required
+  Future<MultisigMakeResult> makeMultisig(
+    List<String> multisigInfos,
+    int threshold,
+  );
+
+  /// Exchange multisig keys (for N-of-N or additional rounds).
+  ///
+  /// [multisigInfo] Multisig info from other participant
+  /// [force] Force update (use with caution)
+  Future<MultisigMakeResult> exchangeMultisigKeys(
+    String multisigInfo, {
+    bool force = false,
+  });
+
+  /// Export multisig info for syncing with other participants.
+  Future<String> exportMultisigInfo();
+
+  /// Import multisig info from other participants.
+  /// Returns number of outputs imported.
+  Future<int> importMultisigInfo(List<String> infos);
+
+  /// Sign a multisig transaction.
+  ///
+  /// [txDataHex] Transaction data from another participant
+  Future<MultisigSignResult> signMultisigTx(String txDataHex);
+
+  /// Submit a multisig transaction that has enough signatures.
+  ///
+  /// [txDataHex] Fully signed transaction data
+  /// Returns list of transaction hashes.
+  Future<List<String>> submitMultisigTx(String txDataHex);
 
   /// Close wallet
   Future<void> close();

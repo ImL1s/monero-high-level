@@ -244,6 +244,102 @@ internal class InMemoryWallet(
         return KeyImageImportResult(0, 0L, 0L)
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Proof Tools (K5.7)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    override suspend fun getTxProof(txHash: String, address: String, message: String?): String {
+        // TODO: Implement with cryptographic proof generation
+        // For now, this requires wallet RPC or full crypto implementation
+        throw UnsupportedOperationException("getTxProof requires RPC connection or full crypto implementation")
+    }
+
+    override suspend fun checkTxProof(
+        txHash: String,
+        address: String,
+        signature: String,
+        message: String?
+    ): TxProofResult {
+        // TODO: Implement proof verification
+        throw UnsupportedOperationException("checkTxProof requires RPC connection or full crypto implementation")
+    }
+
+    override suspend fun getReserveProof(
+        all: Boolean,
+        accountIndex: Int?,
+        amount: Long?,
+        message: String?
+    ): String {
+        // TODO: Implement reserve proof generation
+        throw UnsupportedOperationException("getReserveProof requires RPC connection or full crypto implementation")
+    }
+
+    override suspend fun checkReserveProof(
+        address: String,
+        signature: String,
+        message: String?
+    ): ReserveProofResult {
+        // TODO: Implement reserve proof verification
+        throw UnsupportedOperationException("checkReserveProof requires RPC connection or full crypto implementation")
+    }
+
+    override suspend fun signMessage(message: String): String {
+        // Sign with spend key (Ed25519 signature)
+        val privateKey = state.privateSpendKey
+            ?: throw UnsupportedOperationException("Cannot sign message with view-only wallet")
+        
+        // TODO: Implement Ed25519 message signing
+        // Format: "SigV2" + base58(signature)
+        throw UnsupportedOperationException("signMessage not yet implemented")
+    }
+
+    override suspend fun verifyMessage(message: String, address: String, signature: String): Boolean {
+        // TODO: Implement Ed25519 signature verification
+        throw UnsupportedOperationException("verifyMessage not yet implemented")
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Multisig (K5.3)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    override suspend fun isMultisig(): MultisigStatus {
+        // InMemoryWallet does not support multisig
+        return MultisigStatus(
+            isMultisig = false,
+            isReady = false,
+            threshold = 0,
+            total = 0
+        )
+    }
+
+    override suspend fun prepareMultisig(): String {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
+    override suspend fun makeMultisig(multisigInfos: List<String>, threshold: Int): MultisigMakeResult {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
+    override suspend fun exchangeMultisigKeys(multisigInfo: String, force: Boolean): MultisigMakeResult {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
+    override suspend fun exportMultisigInfo(): String {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
+    override suspend fun importMultisigInfo(infos: List<String>): Int {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
+    override suspend fun signMultisigTx(txDataHex: String): MultisigSignResult {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
+    override suspend fun submitMultisigTx(txDataHex: String): List<String> {
+        throw UnsupportedOperationException("Multisig not supported in InMemoryWallet")
+    }
+
     override suspend fun close() {
         save()
         // Release resources
