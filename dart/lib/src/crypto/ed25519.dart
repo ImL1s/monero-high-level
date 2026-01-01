@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'keccak.dart';
@@ -217,6 +218,33 @@ class Ed25519 {
     final bInt = _bytesToBigInt(b);
     return _bigIntToBytes((aInt + bInt) % l, 32);
   }
+
+  /// Scalar subtraction: a - b mod l
+  static Uint8List scalarSubMod(Uint8List a, Uint8List b) {
+    final aInt = _bytesToBigInt(a);
+    final bInt = _bytesToBigInt(b);
+    return _bigIntToBytes(((aInt - bInt) % l + l) % l, 32);
+  }
+
+  /// Generate a random scalar in range [1, l-1]
+  static Uint8List randomScalar() {
+    final rng = Random.secure();
+    final bytes = Uint8List(64);
+    for (var i = 0; i < 64; i++) {
+      bytes[i] = rng.nextInt(256);
+    }
+    // Reduce to get uniform distribution mod l
+    return scalarReduce(bytes);
+  }
+
+  /// Scalar add (alias for scalarAddMod)
+  static Uint8List scalarAdd(Uint8List a, Uint8List b) => scalarAddMod(a, b);
+
+  /// Scalar subtract (alias for scalarSubMod)
+  static Uint8List scalarSub(Uint8List a, Uint8List b) => scalarSubMod(a, b);
+
+  /// Scalar multiply (alias for scalarMulMod)
+  static Uint8List scalarMul(Uint8List a, Uint8List b) => scalarMulMod(a, b);
 
   /// Convert point to 32-byte representation
   static Uint8List pointToBytes(Point point) {

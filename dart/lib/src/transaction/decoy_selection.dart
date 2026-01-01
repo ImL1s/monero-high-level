@@ -137,7 +137,7 @@ class DecoySelector {
 
     if (output.unlockTime < 500000000) {
       // Block height-based unlock
-      return _currentHeight >= output.unlockTime + MoneroConstants.cryptonoteDefaultUnlockTime;
+      return _currentHeight >= output.unlockTime + MoneroConstants.standardUnlockTime;
     } else {
       // Timestamp-based unlock (deprecated)
       final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;

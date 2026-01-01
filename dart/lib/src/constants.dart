@@ -21,6 +21,38 @@ const int coinbaseUnlockTime = 60;
 const int mnemonicWordCount = 25;
 const int mnemonicSeedBytes = 32;
 
+/// Consolidated Monero constants for convenience.
+class MoneroConstants {
+  MoneroConstants._();
+
+  /// Ring size
+  static const int ringSize = 16;
+
+  /// Maximum inputs per transaction
+  static const int maxInputsPerTx = 128;
+
+  /// Maximum outputs per transaction
+  static const int maxOutputsPerTx = 16;
+
+  /// Standard unlock time
+  static const int standardUnlockTime = 10;
+
+  /// Coinbase unlock time
+  static const int coinbaseUnlockTime = 60;
+
+  /// XMR to atomic units factor
+  static const int xmrFactor = 1000000000000;
+
+  /// Dust threshold
+  static const int dustThreshold = 10000;
+
+  /// Gamma shape parameter for decoy selection
+  static const double gammaShape = 19.28;
+
+  /// Gamma scale parameter for decoy selection
+  static const double gammaScale = 1.61;
+}
+
 /// Address prefixes
 class AddressPrefix {
   AddressPrefix._();
