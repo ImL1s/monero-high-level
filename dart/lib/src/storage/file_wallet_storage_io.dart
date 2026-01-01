@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../crypto/chacha20.dart';
 import 'wallet_storage.dart';
 
 /// File-based wallet storage implementation.
@@ -19,6 +20,7 @@ class FileWalletStorage implements WalletStorage {
 
   bool _open = false;
   late String _path;
+  late String _password;
   int _syncHeight = 0;
   EncryptedKeys? _keys;
 
@@ -36,6 +38,7 @@ class FileWalletStorage implements WalletStorage {
   Future<void> open(String path, String password, {bool create = false}) async {
     final walletFile = File(_walletFilePath(path));
     _path = walletFile.path;
+    _password = password;
 
     if (create) {
       if (walletFile.existsSync()) {
@@ -53,7 +56,7 @@ class FileWalletStorage implements WalletStorage {
       throw StateError('Wallet not found at: ${walletFile.path}');
     }
 
-    final jsonMap = await _readJson(walletFile);
+    final jsonMap = await _readEncrypted(walletFile, password);
     _loadFromJson(jsonMap);
     _open = true;
     _syncHeightController.add(_syncHeight);
@@ -72,7 +75,10 @@ class FileWalletStorage implements WalletStorage {
   @override
   Future<void> changePassword(String oldPassword, String newPassword) async {
     _requireOpen();
-    // Encryption is implemented in D5.2; changing password is a no-op for now.
+    if (oldPassword != _password) {
+      throw AuthenticationException('Old password is incorrect');
+    }
+    _password = newPassword;
     await _persist();
   }
 
@@ -365,9 +371,25 @@ class FileWalletStorage implements WalletStorage {
     _accounts.add(const _StoredAccount(label: 'Primary account', subaddressLabels: ['']));
   }
 
-  Future<Map<String, Object?>> _readJson(File file) async {
-    final content = await file.readAsString();
-    final decoded = jsonDecode(content);
+  Future<Map<String, Object?>> _readEncrypted(File file, String password) async {
+    final encryptedBytes = await file.readAsBytes();
+
+    Uint8List plainBytes;
+    try {
+      plainBytes = WalletEncryption.decrypt(password, encryptedBytes);
+    } on AuthenticationException {
+      throw StateError('Invalid password');
+    } on FormatException {
+      // Legacy unencrypted fallback: try reading as plain JSON
+      final content = utf8.decode(encryptedBytes);
+      final decoded = jsonDecode(content);
+      if (decoded is! Map) {
+        throw FormatException('Invalid wallet file format');
+      }
+      return decoded.cast<String, Object?>();
+    }
+
+    final decoded = jsonDecode(utf8.decode(plainBytes));
     if (decoded is! Map) {
       throw FormatException('Invalid wallet file format');
     }
@@ -455,8 +477,12 @@ class FileWalletStorage implements WalletStorage {
       'txNotes': Map<String, String>.from(_txNotesByHash),
     };
 
+    final jsonString = const JsonEncoder.withIndent('  ').convert(jsonMap);
+    final plainBytes = Uint8List.fromList(utf8.encode(jsonString));
+    final encryptedBytes = WalletEncryption.encrypt(_password, plainBytes);
+
     final tmp = File('${walletFile.path}.tmp');
-    await tmp.writeAsString(const JsonEncoder.withIndent('  ').convert(jsonMap));
+    await tmp.writeAsBytes(encryptedBytes);
     if (walletFile.existsSync()) {
       await walletFile.delete();
     }
