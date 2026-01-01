@@ -19,5 +19,5 @@ rootProject.name = "monero-kmp"
 include(":monero-crypto")
 include(":monero-core")
 include(":monero-net")
+include(":monero-wallet")
 // include(":monero-storage") // requires Android SDK
-// include(":monero-wallet")  // requires Android SDK
