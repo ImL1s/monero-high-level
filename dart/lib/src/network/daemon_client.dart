@@ -66,8 +66,47 @@ class DaemonClient {
 
   /// Get current blockchain height
   Future<int> getHeight() async {
-    final result = await _jsonRpc('get_height');
-    return result['height'] as int;
+    // `get_height` is not consistently available as a JSON-RPC method across
+    // monerod versions/configurations, but `get_info` always includes `height`.
+    final info = await getInfo();
+    return info.height;
+  }
+
+  /// Start mining on the daemon.
+  ///
+  /// This is especially useful for local regtest-based E2E runs.
+  Future<void> startMining({
+    required String minerAddress,
+    int threadsCount = 1,
+    bool doBackgroundMining = false,
+    bool ignoreBattery = true,
+  }) async {
+    await _request('/start_mining', {
+      'miner_address': minerAddress,
+      'threads_count': threadsCount,
+      'do_background_mining': doBackgroundMining,
+      'ignore_battery': ignoreBattery,
+    });
+  }
+
+  /// Stop mining on the daemon.
+  Future<void> stopMining() async {
+    await _request('/stop_mining', const {});
+  }
+
+  /// Generate blocks immediately (regtest/testnet only).
+  ///
+  /// This is much faster than startMining for E2E tests in regtest mode.
+  /// Returns the height after generating the blocks.
+  Future<int> generateblocks({
+    required int amountOfBlocks,
+    required String walletAddress,
+  }) async {
+    final result = await _jsonRpc('generateblocks', {
+      'amount_of_blocks': amountOfBlocks,
+      'wallet_address': walletAddress,
+    });
+    return result['height'] as int? ?? 0;
   }
 
   /// Get block by height
