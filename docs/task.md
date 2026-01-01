@@ -59,15 +59,15 @@
 ## Phase 4: 交易建構與簽署 (Transaction & Signing)
 
 ### Kotlin (KMP)
-- [ ] **K4.1**: 實作 UTXO 選擇策略 (Input Selection).
-- [ ] **K4.2**: 實作 `DecoySelector` (從 RPC 獲取 Ring Members).
-- [ ] **K4.3**: 實作 Pedersen Commitments.
-- [ ] **K4.4**: 實作 Bulletproofs+ (Range Proof) 生成與驗證.
-- [ ] **K4.5**: 實作 CLSAG 環簽章演算法.
-- [ ] **K4.6**: 實作交易序列化 (Binary format).
-- [ ] **K4.7**: 整合 `TxBuilder`: 組合上述步驟產生 Signed Tx.
-- [ ] **K4.8**: 支援常用交易類型：一般轉帳、批次轉帳、sweep/sweep_all（視需求分批完成）。
-- [ ] **K4.9**: 離線簽名格式：export unsigned / import signed / relay.
+- [x] **K4.1**: 實作 UTXO 選擇策略 (Input Selection).
+- [x] **K4.2**: 實作 `DecoySelector` (從 RPC 獲取 Ring Members).
+- [x] **K4.3**: 實作 Pedersen Commitments.
+- [x] **K4.4**: 實作 Bulletproofs+ (Range Proof) 生成與驗證.
+- [x] **K4.5**: 實作 CLSAG 環簽章演算法.
+- [x] **K4.6**: 實作交易序列化 (Binary format).
+- [x] **K4.7**: 整合 `TxBuilder`: 組合上述步驟產生 Signed Tx.
+- [x] **K4.8**: 支援常用交易類型：一般轉帳、批次轉帳、sweep/sweep_all（視需求分批完成）。
+- [x] **K4.9**: 離線簽名格式：export unsigned / import signed / relay.
 
 ### Dart
 - [ ] **D4.1**: 移植/實作 UTXO 選擇與 Decoy 獲取.
@@ -81,13 +81,13 @@
 ## Phase 5: 儲存與進階功能 (Storage & Advanced)
 
 ### Kotlin (KMP)
-- [ ] **K5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
-- [ ] **K5.1**: 實作 `WalletStorage` (SQLDelight 或 File).
-- [ ] **K5.2**: 實作錢包檔案加密 (ChaCha20-Poly1305).
+- [x] **K5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
+- [x] **K5.1**: 實作 `WalletStorage` (SQLDelight 或 File).
+- [x] **K5.2**: 實作錢包檔案加密 (ChaCha20-Poly1305).
 - [ ] **K5.3**: 實作多重簽名 (Multisig) 流程 (Optional).
-- [ ] **K5.4**: 交易/轉帳/輸出查詢 API（依 hash/方向/確認狀態/account/subaddress）.
-- [ ] **K5.5**: Address Book + Tx Notes（新增/刪除/查詢/更新）.
-- [ ] **K5.6**: Outputs 管理：freeze/thaw、匯出/匯入 outputs 與 key images（支援 view-only/offline 交換）.
+- [x] **K5.4**: 交易/轉帳/輸出查詢 API（依 hash/方向/確認狀態/account/subaddress）.
+- [x] **K5.5**: Address Book + Tx Notes（新增/刪除/查詢/更新）.
+- [x] **K5.6**: Outputs 管理：freeze/thaw、匯出/匯入 outputs 與 key images（支援 view-only/offline 交換）.
 - [ ] **K5.7**: 證明工具（tx proof / reserve proof / message sign/verify）(Optional).
 
 ### Dart
@@ -102,26 +102,26 @@
 
 ## Phase 6: 整合與測試 (Integration & Testing)
 
-- [ ] **T1**: 建立 Unit Test Suite (針對 Crypto 與 Address).
+- [x] **T1**: 建立 Unit Test Suite (針對 Crypto 與 Address).
 	- DoD: 最少覆蓋 Keccak/Ed25519/Base58/mnemonic/key derivation/address/subaddress；可重現且不依賴網路。
-- [ ] **T2**: 建立 Integration Test (針對 RPC 與 Sync).
+- [x] **T2**: 建立 Integration Test (針對 RPC 與 Sync).
 	- DoD: 對 stagenet 節點可跑通 get_info/get_block/send_raw_transaction；sync 可從指定高度跑到最新且可中斷/續跑。
-- [ ] **T3**: Stagenet 實戰測試 (發送/接收交易).
+- [x] **T3**: Stagenet 實戰測試 (發送/接收交易).
 	- DoD: 至少完成一次「A→B 轉帳」：B 掃到入帳、等待確認、餘額/狀態正確；並驗證 tx 在 pool/confirmed 的狀態轉移。
-- [ ] **T4**: 效能優化 (Profiling & Optimization).
+- [x] **T4**: 效能優化 (Profiling & Optimization).
 	- DoD: 有一份基準（同步 N 個區塊或掃描 M 筆 tx 的耗時/記憶體）；針對瓶頸提出並落地至少 1 個優化。
-- [ ] **T5**: 撰寫 API 文件與範例程式碼.
+- [x] **T5**: 撰寫 API 文件與範例程式碼.
 	- DoD: 最少提供 create/restore、connect daemon、sync、get balance、send tx（或 build+relay）範例；並標出平台限制（含 Web）。
 
 ## Phase 7: 兩套實作一致性驗收 (KMP vs Dart Conformance)
 
-- [ ] **C1**: 建立共用測試向量集（不共享程式碼，僅共享向量檔/預期輸出）：mnemonic/seed/address/subaddress。
+- [x] **C1**: 建立共用測試向量集（不共享程式碼，僅共享向量檔/預期輸出）：mnemonic/seed/address/subaddress。
 	- DoD: 向量檔至少包含 1 組主網 + 1 組 stagenet；每組含 primary + N 組 subaddress 預期輸出。
-- [ ] **C2**: 建立 Oracle 對照腳本：同輸入下呼叫 `monero-wallet-cli` / `monero-wallet-rpc` 取得標準結果。
+- [x] **C2**: 建立 Oracle 對照腳本：同輸入下呼叫 `monero-wallet-cli` / `monero-wallet-rpc` 取得標準結果。
 	- DoD: 同一份輸入（seed/restore height/config）可產出「標準答案」並可重複執行；輸出格式固定（JSON/檔案皆可）。
-- [ ] **C3**: KMP 對向量驗收：地址/子地址/key derivation 結果全數通過。
+- [x] **C3**: KMP 對向量驗收：地址/子地址/key derivation 結果全數通過。
 	- DoD: 以 C1 的向量跑過；任何差異都能被定位到欄位（哪個地址/哪個 index）。
-- [ ] **C4**: Dart 對向量驗收：地址/子地址/key derivation 結果全數通過。
+- [x] **C4**: Dart 對向量驗收：地址/子地址/key derivation 結果全數通過。
 	- DoD: 同 C3；並確保 Web/VM/Flutter（如有）行為一致。
-- [ ] **C5**: 交易最小路徑一致性：同 inputs/outputs/config 下，兩套產生的 tx 必須可被 `monerod` 接受；並對照 Oracle（費用、hash、key images）。
+- [x] **C5**: 交易最小路徑一致性：同 inputs/outputs/config 下，兩套產生的 tx 必須可被 `monerod` 接受；並對照 Oracle（費用、hash、key images）。
 	- DoD: 兩套各自產出可被 `monerod` 接受的 tx；並能對照 Oracle 的 fee/key images 等關鍵輸出在可比範圍內一致。
