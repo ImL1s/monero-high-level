@@ -102,6 +102,20 @@ void main() {
         expect(split.standardAddress, equals(addr.address));
         expect(split.paymentId, equals('1234567890123456'));
 
+        final balance = await client.getBalance();
+        expect(balance.balance, isNotNull);
+
+        final uri = await client.makeUri(
+          address: integrated.integratedAddress,
+          amount: BigInt.from(10),
+          recipientName: 'e2e',
+          txDescription: 'offline-e2e',
+        );
+        expect(uri, isNotEmpty);
+        final parsed = await client.parseUri(uri: uri);
+        expect(parsed.address, equals(integrated.integratedAddress));
+        expect(parsed.amount, equals(BigInt.from(10)));
+
         final mnemonic = await client.queryKey('mnemonic');
         expect(mnemonic.key, isNotEmpty);
 
