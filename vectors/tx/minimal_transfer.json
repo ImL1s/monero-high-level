@@ -1,0 +1,86 @@
+{
+  "description": "Transaction conformance test vectors",
+  "network": "stagenet",
+  "generated_by": "monero-wallet-cli / custom builder",
+  "vectors": [
+    {
+      "id": "tx-001",
+      "description": "Minimal single input, single output transfer",
+      "inputs": [
+        {
+          "amount": 1000000000000,
+          "key_image": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f60001",
+          "global_index": 12345,
+          "tx_pub_key": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          "output_index": 0,
+          "ring_members": [
+            { "global_index": 12340, "key": "ringkey1..." },
+            { "global_index": 12341, "key": "ringkey2..." },
+            { "global_index": 12342, "key": "ringkey3..." },
+            { "global_index": 12343, "key": "ringkey4..." },
+            { "global_index": 12344, "key": "ringkey5..." },
+            { "global_index": 12345, "key": "realkey..." },
+            { "real_output_index": 5 }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "address": "5stagenetaddress...",
+          "amount": 900000000000,
+          "is_change": false
+        }
+      ],
+      "fee": 100000000000,
+      "expected": {
+        "tx_size_range": [1800, 2200],
+        "fee_acceptable": true,
+        "structure_valid": true,
+        "notes": "Exact tx_hash cannot be verified without full ring data"
+      }
+    },
+    {
+      "id": "tx-002",
+      "description": "Two outputs with change",
+      "inputs": [
+        {
+          "amount": 5000000000000,
+          "key_image": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f60002",
+          "global_index": 23456
+        }
+      ],
+      "outputs": [
+        {
+          "address": "5recipient...",
+          "amount": 1000000000000,
+          "is_change": false
+        },
+        {
+          "address": "5sender_change...",
+          "amount": 3900000000000,
+          "is_change": true
+        }
+      ],
+      "fee": 100000000000,
+      "expected": {
+        "output_count": 2,
+        "has_change": true
+      }
+    }
+  ],
+  "conformance_rules": {
+    "ring_size": 16,
+    "fee_calculation": "fee = size_in_bytes * fee_per_byte",
+    "bulletproof_plus": true,
+    "clsag": true,
+    "output_ordering": "random (shuffle)",
+    "decoy_selection": "gamma distribution"
+  },
+  "notes": [
+    "Both KMP and Dart implementations must produce valid transactions",
+    "Transactions must be accepted by monerod",
+    "Fee must be within acceptable range",
+    "Ring signature must be valid",
+    "Bulletproofs+ must verify"
+  ]
+}

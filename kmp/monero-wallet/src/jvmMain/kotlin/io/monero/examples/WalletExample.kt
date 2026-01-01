@@ -7,8 +7,6 @@ import io.monero.core.transaction.*
 import io.monero.net.*
 import io.monero.wallet.*
 import io.monero.wallet.storage.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
 
 /**
  * Complete example demonstrating the Monero KMP wallet workflow.
@@ -27,7 +25,7 @@ object WalletExample {
     /**
      * Example: Create a new wallet
      */
-    fun createNewWallet(): WalletKeys {
+    fun createNewWallet(): KeyDerivation.WalletKeys {
         // Generate secure random entropy
         val entropy = ByteArray(32)
         java.security.SecureRandom().nextBytes(entropy)
@@ -53,7 +51,7 @@ object WalletExample {
     /**
      * Example: Restore wallet from mnemonic
      */
-    fun restoreFromMnemonic(words: List<String>): WalletKeys {
+    fun restoreFromMnemonic(words: List<String>): KeyDerivation.WalletKeys {
         // Validate mnemonic
         require(Mnemonic.validate(words)) { "Invalid mnemonic" }
         
@@ -115,7 +113,7 @@ object WalletExample {
     /**
      * Example: Generate subaddresses
      */
-    fun generateSubaddresses(keys: WalletKeys, count: Int) {
+    fun generateSubaddresses(keys: KeyDerivation.WalletKeys, count: Int) {
         println("=== SUBADDRESSES ===")
         
         // Primary address (0, 0)
@@ -132,7 +130,7 @@ object WalletExample {
     /**
      * Example: Scan transaction for owned outputs
      */
-    fun scanTransaction(keys: WalletKeys, tx: Transaction): List<ScannedOutput> {
+    fun scanTransaction(keys: KeyDerivation.WalletKeys, tx: Transaction): List<ScannedOutput> {
         val scanner = ViewKeyScanner(
             viewPublicKey = keys.publicViewKey,
             viewSecretKey = keys.privateViewKey,
@@ -148,8 +146,11 @@ object WalletExample {
         if (found.isNotEmpty()) {
             println("=== FOUND OUTPUTS ===")
             for (output in found) {
-                println("Amount: ${output.amount / 1_000_000_000_000.0} XMR")
-                println("Subaddress: [${output.subaddressIndex?.major},${output.subaddressIndex?.minor}]")
+                val amountXmr = (output.amount ?: 0L) / 1_000_000_000_000.0
+                val major = output.subaddressIndex?.first ?: 0
+                val minor = output.subaddressIndex?.second ?: 0
+                println("Amount: $amountXmr XMR")
+                println("Subaddress: [$major,$minor]")
             }
         }
         
@@ -157,43 +158,35 @@ object WalletExample {
     }
 
     /**
-     * Example: Build a transaction
+     * Example: Build a transaction  
+     * 
+     * Note: This is a simplified example. In production you would:
+     * - Use SpendableOutput instead of OwnedOutput
+     * - Configure proper output/decoy providers
+     * - Handle fee estimation properly
      */
-    suspend fun buildTransaction(
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun buildTransactionExample(
         client: DaemonClient,
-        keys: WalletKeys,
-        inputs: List<OwnedOutput>,
+        keys: KeyDerivation.WalletKeys,
         recipient: MoneroAddress,
         amount: Long
-    ): BuiltTransaction {
+    ) {
         val fee = client.getFeeEstimate()
         val changeAddress = KeyDerivation.deriveStandardAddress(keys, MoneroAddress.Network.STAGENET)
         
-        val builder = TxBuilder()
-        
-        // Add inputs
-        for (input in inputs) {
-            builder.addInput(input)
-        }
-        
-        // Add destination
-        builder.addDestination(recipient.rawAddress, amount)
-        
-        // Set change address
-        builder.setChangeAddress(changeAddress.rawAddress)
-        
-        // Set fee
-        builder.setFeePerByte(fee.feePerByte)
-        
-        // Build
-        val tx = builder.build()
-        
-        println("=== TRANSACTION BUILT ===")
-        println("Size: ${tx.blob.size} bytes")
-        println("Fee: ${tx.fee / 1_000_000_000_000.0} XMR")
-        println("Hash: ${tx.hash}")
-        
-        return tx
+        println("=== TRANSACTION BUILD EXAMPLE ===")
+        println("To build a transaction you need:")
+        println("1. SpendableOutput list with key images")
+        println("2. OutputProvider for decoy selection")
+        println("3. SelectionConfig for input selection")
+        println()
+        println("Recipient: ${recipient.rawAddress}")
+        println("Amount: ${amount / 1_000_000_000_000.0} XMR")
+        println("Fee per byte: ${fee.feePerByte} atomic units")
+        println("Change address: ${changeAddress.rawAddress}")
+        println()
+        println("See TxBuilder for full transaction building API")
     }
 
     /**
@@ -235,15 +228,6 @@ object WalletExample {
     private fun ByteArray.toHex(): String = 
         joinToString("") { "%02x".format(it) }
 }
-
-/**
- * Simple data class for transaction building example
- */
-data class BuiltTransaction(
-    val blob: ByteArray,
-    val hash: String,
-    val fee: Long
-)
 
 /**
  * Run the example
