@@ -725,6 +725,275 @@ class WalletRpcClient {
     return GetAddressResult.fromJson(result);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // TRANSFERS & PAYMENTS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Get a list of incoming payments using a given payment id.
+  Future<List<Payment>> getPayments({required String paymentId}) async {
+    final result = await _jsonRpc('get_payments', {'payment_id': paymentId});
+    return (result['payments'] as List?)
+            ?.map((e) => Payment.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [];
+  }
+
+  /// Get a list of incoming payments using multiple payment ids from a given height.
+  Future<List<Payment>> getBulkPayments({
+    required List<String> paymentIds,
+    required int minBlockHeight,
+  }) async {
+    final result = await _jsonRpc('get_bulk_payments', {
+      'payment_ids': paymentIds,
+      'min_block_height': minBlockHeight,
+    });
+    return (result['payments'] as List?)
+            ?.map((e) => Payment.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [];
+  }
+
+  /// Return a list of incoming transfers to the wallet.
+  Future<List<IncomingTransfer>> incomingTransfers({
+    required String transferType, // "all", "available", "unavailable"
+    int? accountIndex,
+    List<int>? subaddrIndices,
+  }) async {
+    final result = await _jsonRpc('incoming_transfers', {
+      'transfer_type': transferType,
+      if (accountIndex != null) 'account_index': accountIndex,
+      if (subaddrIndices != null) 'subaddr_indices': subaddrIndices,
+    });
+    return (result['transfers'] as List?)
+            ?.map((e) => IncomingTransfer.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [];
+  }
+
+  /// Returns a list of transfers.
+  Future<GetTransfersResult> getTransfers({
+    bool inFlag = false,
+    bool outFlag = false,
+    bool pending = false,
+    bool failed = false,
+    bool pool = false,
+    bool? filterByHeight,
+    int? minHeight,
+    int? maxHeight,
+    int? accountIndex,
+    List<int>? subaddrIndices,
+    bool? allAccounts,
+  }) async {
+    final result = await _jsonRpc('get_transfers', {
+      'in': inFlag,
+      'out': outFlag,
+      'pending': pending,
+      'failed': failed,
+      'pool': pool,
+      if (filterByHeight != null) 'filter_by_height': filterByHeight,
+      if (minHeight != null) 'min_height': minHeight,
+      if (maxHeight != null) 'max_height': maxHeight,
+      if (accountIndex != null) 'account_index': accountIndex,
+      if (subaddrIndices != null) 'subaddr_indices': subaddrIndices,
+      if (allAccounts != null) 'all_accounts': allAccounts,
+    });
+    return GetTransfersResult.fromJson(result);
+  }
+
+  /// Show information about a transfer to/from this address.
+  Future<TransferEntry> getTransferByTxid({
+    required String txid,
+    int? accountIndex,
+  }) async {
+    final result = await _jsonRpc('get_transfer_by_txid', {
+      'txid': txid,
+      if (accountIndex != null) 'account_index': accountIndex,
+    });
+    return TransferEntry.fromJson(result['transfer'] as Map<String, dynamic>);
+  }
+
+  /// Describe an unsigned or multisig transaction set.
+  Future<List<TransferDescription>> describeTransfer({
+    String? unsignedTxset,
+    String? multisigTxset,
+  }) async {
+    final result = await _jsonRpc('describe_transfer', {
+      if (unsignedTxset != null) 'unsigned_txset': unsignedTxset,
+      if (multisigTxset != null) 'multisig_txset': multisigTxset,
+    });
+    return (result['desc'] as List?)
+            ?.map((e) => TransferDescription.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [];
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SWEEP OPERATIONS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Send all dust outputs back to the wallet to make them easier to spend.
+  Future<SweepResult> sweepDust({
+    bool? getTxKeys,
+    bool? doNotRelay,
+    bool? getTxHex,
+    bool? getTxMetadata,
+  }) async {
+    final result = await _jsonRpc('sweep_dust', {
+      if (getTxKeys != null) 'get_tx_keys': getTxKeys,
+      if (doNotRelay != null) 'do_not_relay': doNotRelay,
+      if (getTxHex != null) 'get_tx_hex': getTxHex,
+      if (getTxMetadata != null) 'get_tx_metadata': getTxMetadata,
+    });
+    return SweepResult.fromJson(result);
+  }
+
+  /// Send all unlocked balance to an address.
+  Future<SweepResult> sweepAll({
+    required String address,
+    required int accountIndex,
+    List<int>? subaddrIndices,
+    bool? subaddrIndicesAll,
+    int? priority,
+    int? outputs,
+    int? ringSize,
+    int? unlockTime,
+    String? paymentId,
+    bool? getTxKeys,
+    BigInt? belowAmount,
+    bool? doNotRelay,
+    bool? getTxHex,
+    bool? getTxMetadata,
+  }) async {
+    final result = await _jsonRpc('sweep_all', {
+      'address': address,
+      'account_index': accountIndex,
+      if (subaddrIndices != null) 'subaddr_indices': subaddrIndices,
+      if (subaddrIndicesAll != null) 'subaddr_indices_all': subaddrIndicesAll,
+      if (priority != null) 'priority': priority,
+      if (outputs != null) 'outputs': outputs,
+      if (ringSize != null) 'ring_size': ringSize,
+      if (unlockTime != null) 'unlock_time': unlockTime,
+      if (paymentId != null) 'payment_id': paymentId,
+      if (getTxKeys != null) 'get_tx_keys': getTxKeys,
+      if (belowAmount != null) 'below_amount': belowAmount.toString(),
+      if (doNotRelay != null) 'do_not_relay': doNotRelay,
+      if (getTxHex != null) 'get_tx_hex': getTxHex,
+      if (getTxMetadata != null) 'get_tx_metadata': getTxMetadata,
+    });
+    return SweepResult.fromJson(result);
+  }
+
+  /// Send all of a specific unlocked output to an address.
+  Future<SweepSingleResult> sweepSingle({
+    required String address,
+    required String keyImage,
+    int? priority,
+    int? outputs,
+    int? ringSize,
+    int? unlockTime,
+    String? paymentId,
+    bool? getTxKey,
+    bool? doNotRelay,
+    bool? getTxHex,
+    bool? getTxMetadata,
+  }) async {
+    final result = await _jsonRpc('sweep_single', {
+      'address': address,
+      'key_image': keyImage,
+      if (priority != null) 'priority': priority,
+      if (outputs != null) 'outputs': outputs,
+      if (ringSize != null) 'ring_size': ringSize,
+      if (unlockTime != null) 'unlock_time': unlockTime,
+      if (paymentId != null) 'payment_id': paymentId,
+      if (getTxKey != null) 'get_tx_key': getTxKey,
+      if (doNotRelay != null) 'do_not_relay': doNotRelay,
+      if (getTxHex != null) 'get_tx_hex': getTxHex,
+      if (getTxMetadata != null) 'get_tx_metadata': getTxMetadata,
+    });
+    return SweepSingleResult.fromJson(result);
+  }
+
+  /// Relay a transaction previously created with do_not_relay:true.
+  Future<String> relayTx({required String hex}) async {
+    final result = await _jsonRpc('relay_tx', {'hex': hex});
+    return result['tx_hash'] as String? ?? '';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // WALLET MANAGEMENT
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Store the current state of any open wallet and exit the wallet-rpc process.
+  Future<void> stopWallet() async {
+    await _jsonRpc('stop_wallet');
+  }
+
+  /// Restore a wallet from mnemonic phrase.
+  Future<RestoreWalletResult> restoreDeterministicWallet({
+    required String filename,
+    required String password,
+    required String seed,
+    int? restoreHeight,
+    String? language,
+    String? seedOffset,
+    bool? autosaveCurrent,
+  }) async {
+    final result = await _jsonRpc('restore_deterministic_wallet', {
+      'filename': filename,
+      'password': password,
+      'seed': seed,
+      if (restoreHeight != null) 'restore_height': restoreHeight,
+      if (language != null) 'language': language,
+      if (seedOffset != null) 'seed_offset': seedOffset,
+      if (autosaveCurrent != null) 'autosave_current': autosaveCurrent,
+    });
+    return RestoreWalletResult.fromJson(result);
+  }
+
+  /// Restore a wallet from private keys.
+  Future<GenerateFromKeysResult> generateFromKeys({
+    required String filename,
+    required String address,
+    required String viewkey,
+    required String password,
+    String? spendkey,
+    int? restoreHeight,
+    bool? autosaveCurrent,
+  }) async {
+    final result = await _jsonRpc('generate_from_keys', {
+      'filename': filename,
+      'address': address,
+      'viewkey': viewkey,
+      'password': password,
+      if (spendkey != null) 'spendkey': spendkey,
+      if (restoreHeight != null) 'restore_height': restoreHeight,
+      if (autosaveCurrent != null) 'autosave_current': autosaveCurrent,
+    });
+    return GenerateFromKeysResult.fromJson(result);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MINING
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Start mining in the Monero daemon.
+  Future<void> startMining({
+    required int threadsCount,
+    required bool doBackgroundMining,
+    required bool ignoreBattery,
+  }) async {
+    await _jsonRpc('start_mining', {
+      'threads_count': threadsCount,
+      'do_background_mining': doBackgroundMining,
+      'ignore_battery': ignoreBattery,
+    });
+  }
+
+  /// Stop mining in the Monero daemon.
+  Future<void> stopMining() async {
+    await _jsonRpc('stop_mining');
+  }
+
   Future<Map<String, dynamic>> _jsonRpc(String method,
       [Map<String, dynamic>? params]) async {
     _checkCircuitBreaker();
@@ -1407,5 +1676,360 @@ class SubmitMultisigResult {
 
   factory SubmitMultisigResult.fromJson(Map<String, dynamic> json) => SubmitMultisigResult(
         txHashList: (json['tx_hash_list'] as List?)?.cast<String>() ?? const [],
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYMENT & TRANSFER DTOs
+// ─────────────────────────────────────────────────────────────────────────────
+
+class Payment {
+  final String paymentId;
+  final String txHash;
+  final BigInt amount;
+  final int blockHeight;
+  final int unlockTime;
+  final bool locked;
+  final SubaddressIndex subaddrIndex;
+  final String address;
+
+  const Payment({
+    required this.paymentId,
+    required this.txHash,
+    required this.amount,
+    required this.blockHeight,
+    required this.unlockTime,
+    required this.locked,
+    required this.subaddrIndex,
+    required this.address,
+  });
+
+  factory Payment.fromJson(Map<String, dynamic> json) => Payment(
+        paymentId: json['payment_id'] as String? ?? '',
+        txHash: json['tx_hash'] as String? ?? '',
+        amount: WalletRpcClient._parseBigInt(json['amount']),
+        blockHeight: json['block_height'] as int? ?? 0,
+        unlockTime: json['unlock_time'] as int? ?? 0,
+        locked: json['locked'] as bool? ?? false,
+        subaddrIndex: SubaddressIndex.fromJson(
+            (json['subaddr_index'] as Map<String, dynamic>?) ?? const {}),
+        address: json['address'] as String? ?? '',
+      );
+}
+
+class IncomingTransfer {
+  final BigInt amount;
+  final int globalIndex;
+  final String keyImage;
+  final bool spent;
+  final SubaddressIndex subaddrIndex;
+  final String txHash;
+  final bool frozen;
+  final bool unlocked;
+  final int blockHeight;
+  final String pubkey;
+
+  const IncomingTransfer({
+    required this.amount,
+    required this.globalIndex,
+    required this.keyImage,
+    required this.spent,
+    required this.subaddrIndex,
+    required this.txHash,
+    required this.frozen,
+    required this.unlocked,
+    required this.blockHeight,
+    required this.pubkey,
+  });
+
+  factory IncomingTransfer.fromJson(Map<String, dynamic> json) => IncomingTransfer(
+        amount: WalletRpcClient._parseBigInt(json['amount']),
+        globalIndex: json['global_index'] as int? ?? 0,
+        keyImage: json['key_image'] as String? ?? '',
+        spent: json['spent'] as bool? ?? false,
+        subaddrIndex: SubaddressIndex.fromJson(
+            (json['subaddr_index'] as Map<String, dynamic>?) ?? const {}),
+        txHash: json['tx_hash'] as String? ?? '',
+        frozen: json['frozen'] as bool? ?? false,
+        unlocked: json['unlocked'] as bool? ?? false,
+        blockHeight: json['block_height'] as int? ?? 0,
+        pubkey: json['pubkey'] as String? ?? '',
+      );
+}
+
+class TransferEntry {
+  final String address;
+  final BigInt amount;
+  final List<BigInt> amounts;
+  final int confirmations;
+  final bool doubleSpendSeen;
+  final BigInt fee;
+  final int height;
+  final bool locked;
+  final String note;
+  final String paymentId;
+  final SubaddressIndex subaddrIndex;
+  final int suggestedConfirmationsThreshold;
+  final int timestamp;
+  final String txid;
+  final String type;
+  final int unlockTime;
+
+  const TransferEntry({
+    required this.address,
+    required this.amount,
+    required this.amounts,
+    required this.confirmations,
+    required this.doubleSpendSeen,
+    required this.fee,
+    required this.height,
+    required this.locked,
+    required this.note,
+    required this.paymentId,
+    required this.subaddrIndex,
+    required this.suggestedConfirmationsThreshold,
+    required this.timestamp,
+    required this.txid,
+    required this.type,
+    required this.unlockTime,
+  });
+
+  factory TransferEntry.fromJson(Map<String, dynamic> json) => TransferEntry(
+        address: json['address'] as String? ?? '',
+        amount: WalletRpcClient._parseBigInt(json['amount']),
+        amounts: (json['amounts'] as List?)
+                ?.map((e) => WalletRpcClient._parseBigInt(e))
+                .toList() ??
+            const [],
+        confirmations: json['confirmations'] as int? ?? 0,
+        doubleSpendSeen: json['double_spend_seen'] as bool? ?? false,
+        fee: WalletRpcClient._parseBigInt(json['fee']),
+        height: json['height'] as int? ?? 0,
+        locked: json['locked'] as bool? ?? false,
+        note: json['note'] as String? ?? '',
+        paymentId: json['payment_id'] as String? ?? '',
+        subaddrIndex: SubaddressIndex.fromJson(
+            (json['subaddr_index'] as Map<String, dynamic>?) ?? const {}),
+        suggestedConfirmationsThreshold:
+            json['suggested_confirmations_threshold'] as int? ?? 0,
+        timestamp: json['timestamp'] as int? ?? 0,
+        txid: json['txid'] as String? ?? '',
+        type: json['type'] as String? ?? '',
+        unlockTime: json['unlock_time'] as int? ?? 0,
+      );
+}
+
+class GetTransfersResult {
+  final List<TransferEntry> inTransfers;
+  final List<TransferEntry> outTransfers;
+  final List<TransferEntry> pending;
+  final List<TransferEntry> failed;
+  final List<TransferEntry> pool;
+
+  const GetTransfersResult({
+    required this.inTransfers,
+    required this.outTransfers,
+    required this.pending,
+    required this.failed,
+    required this.pool,
+  });
+
+  factory GetTransfersResult.fromJson(Map<String, dynamic> json) => GetTransfersResult(
+        inTransfers: (json['in'] as List?)
+                ?.map((e) => TransferEntry.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        outTransfers: (json['out'] as List?)
+                ?.map((e) => TransferEntry.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        pending: (json['pending'] as List?)
+                ?.map((e) => TransferEntry.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        failed: (json['failed'] as List?)
+                ?.map((e) => TransferEntry.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        pool: (json['pool'] as List?)
+                ?.map((e) => TransferEntry.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+      );
+}
+
+class TransferDescription {
+  final BigInt amountIn;
+  final BigInt amountOut;
+  final List<TransferRecipient> recipients;
+  final String changeAddress;
+  final BigInt changeAmount;
+  final BigInt fee;
+  final String paymentId;
+  final int ringSize;
+  final int unlockTime;
+  final int dummyOutputs;
+  final String extra;
+
+  const TransferDescription({
+    required this.amountIn,
+    required this.amountOut,
+    required this.recipients,
+    required this.changeAddress,
+    required this.changeAmount,
+    required this.fee,
+    required this.paymentId,
+    required this.ringSize,
+    required this.unlockTime,
+    required this.dummyOutputs,
+    required this.extra,
+  });
+
+  factory TransferDescription.fromJson(Map<String, dynamic> json) => TransferDescription(
+        amountIn: WalletRpcClient._parseBigInt(json['amount_in']),
+        amountOut: WalletRpcClient._parseBigInt(json['amount_out']),
+        recipients: (json['recipients'] as List?)
+                ?.map((e) => TransferRecipient.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        changeAddress: json['change_address'] as String? ?? '',
+        changeAmount: WalletRpcClient._parseBigInt(json['change_amount']),
+        fee: WalletRpcClient._parseBigInt(json['fee']),
+        paymentId: json['payment_id'] as String? ?? '',
+        ringSize: json['ring_size'] as int? ?? 0,
+        unlockTime: json['unlock_time'] as int? ?? 0,
+        dummyOutputs: json['dummy_outputs'] as int? ?? 0,
+        extra: json['extra'] as String? ?? '',
+      );
+}
+
+class TransferRecipient {
+  final String address;
+  final BigInt amount;
+
+  const TransferRecipient({required this.address, required this.amount});
+
+  factory TransferRecipient.fromJson(Map<String, dynamic> json) => TransferRecipient(
+        address: json['address'] as String? ?? '',
+        amount: WalletRpcClient._parseBigInt(json['amount']),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SWEEP DTOs
+// ─────────────────────────────────────────────────────────────────────────────
+
+class SweepResult {
+  final List<String> txHashList;
+  final List<String> txKeyList;
+  final List<BigInt> amountList;
+  final List<BigInt> feeList;
+  final List<int> weightList;
+  final List<String> txBlobList;
+  final List<String> txMetadataList;
+  final String multisigTxset;
+  final String unsignedTxset;
+
+  const SweepResult({
+    required this.txHashList,
+    required this.txKeyList,
+    required this.amountList,
+    required this.feeList,
+    required this.weightList,
+    required this.txBlobList,
+    required this.txMetadataList,
+    required this.multisigTxset,
+    required this.unsignedTxset,
+  });
+
+  factory SweepResult.fromJson(Map<String, dynamic> json) => SweepResult(
+        txHashList: (json['tx_hash_list'] as List?)?.cast<String>() ?? const [],
+        txKeyList: (json['tx_key_list'] as List?)?.cast<String>() ?? const [],
+        amountList: (json['amount_list'] as List?)
+                ?.map((e) => WalletRpcClient._parseBigInt(e))
+                .toList() ??
+            const [],
+        feeList: (json['fee_list'] as List?)
+                ?.map((e) => WalletRpcClient._parseBigInt(e))
+                .toList() ??
+            const [],
+        weightList: (json['weight_list'] as List?)?.cast<int>() ?? const [],
+        txBlobList: (json['tx_blob_list'] as List?)?.cast<String>() ?? const [],
+        txMetadataList: (json['tx_metadata_list'] as List?)?.cast<String>() ?? const [],
+        multisigTxset: json['multisig_txset'] as String? ?? '',
+        unsignedTxset: json['unsigned_txset'] as String? ?? '',
+      );
+}
+
+class SweepSingleResult {
+  final String txHash;
+  final String txKey;
+  final BigInt amount;
+  final BigInt fee;
+  final int weight;
+  final String txBlob;
+  final String txMetadata;
+  final String multisigTxset;
+  final String unsignedTxset;
+
+  const SweepSingleResult({
+    required this.txHash,
+    required this.txKey,
+    required this.amount,
+    required this.fee,
+    required this.weight,
+    required this.txBlob,
+    required this.txMetadata,
+    required this.multisigTxset,
+    required this.unsignedTxset,
+  });
+
+  factory SweepSingleResult.fromJson(Map<String, dynamic> json) => SweepSingleResult(
+        txHash: json['tx_hash'] as String? ?? '',
+        txKey: json['tx_key'] as String? ?? '',
+        amount: WalletRpcClient._parseBigInt(json['amount']),
+        fee: WalletRpcClient._parseBigInt(json['fee']),
+        weight: json['weight'] as int? ?? 0,
+        txBlob: json['tx_blob'] as String? ?? '',
+        txMetadata: json['tx_metadata'] as String? ?? '',
+        multisigTxset: json['multisig_txset'] as String? ?? '',
+        unsignedTxset: json['unsigned_txset'] as String? ?? '',
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WALLET RESTORE DTOs
+// ─────────────────────────────────────────────────────────────────────────────
+
+class RestoreWalletResult {
+  final String address;
+  final String info;
+  final String seed;
+  final bool wasDeprecated;
+
+  const RestoreWalletResult({
+    required this.address,
+    required this.info,
+    required this.seed,
+    required this.wasDeprecated,
+  });
+
+  factory RestoreWalletResult.fromJson(Map<String, dynamic> json) => RestoreWalletResult(
+        address: json['address'] as String? ?? '',
+        info: json['info'] as String? ?? '',
+        seed: json['seed'] as String? ?? '',
+        wasDeprecated: json['was_deprecated'] as bool? ?? false,
+      );
+}
+
+class GenerateFromKeysResult {
+  final String address;
+  final String info;
+
+  const GenerateFromKeysResult({required this.address, required this.info});
+
+  factory GenerateFromKeysResult.fromJson(Map<String, dynamic> json) => GenerateFromKeysResult(
+        address: json['address'] as String? ?? '',
+        info: json['info'] as String? ?? '',
       );
 }
