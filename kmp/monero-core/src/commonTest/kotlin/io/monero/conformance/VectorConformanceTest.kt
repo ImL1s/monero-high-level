@@ -100,7 +100,7 @@ class VectorConformanceTest {
     // ======== Subaddress Derivation Conformance ========
 
     @Test
-    fun `subaddress (0,0) equals primary address keys`() {
+    fun `subaddress at index 0-0 equals primary address keys`() {
         val seed = ByteArray(32) { 0x42.toByte() }
         val keys = KeyDerivation.deriveWalletKeys(seed)
         val sub00 = KeyDerivation.deriveSubaddress(keys, 0, 0)
@@ -214,7 +214,7 @@ class VectorConformanceTest {
     }
 
     private fun ByteArray.toHex(): String = 
-        joinToString("") { "%02x".format(it) }
+        joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
 }
 
 /**

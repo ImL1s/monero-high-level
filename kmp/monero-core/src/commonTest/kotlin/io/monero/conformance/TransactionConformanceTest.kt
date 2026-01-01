@@ -25,7 +25,7 @@ class TransactionConformanceTest {
     // ========== TX Structure Validation ==========
     
     @Test
-    @Ignore("Requires full transaction builder implementation")
+    @Ignore
     fun `C5-1 single output transaction has valid structure`() {
         // When transaction builder is complete:
         // 1. Build a minimal tx with one input, one output
@@ -44,7 +44,7 @@ class TransactionConformanceTest {
     }
     
     @Test
-    @Ignore("Requires full transaction builder implementation")
+    @Ignore
     fun `C5-2 two output transaction has valid structure`() {
         // Two outputs: destination + change
         // Verify proper output shuffle
@@ -58,7 +58,7 @@ class TransactionConformanceTest {
     // ========== Ring Signature Validation ==========
     
     @Test
-    @Ignore("Requires CLSAG implementation")
+    @Ignore
     fun `C5-3 CLSAG signature verifies correctly`() {
         // 1. Build transaction with ring signature
         // 2. Extract CLSAG from rct_signatures
@@ -74,7 +74,7 @@ class TransactionConformanceTest {
     }
     
     @Test
-    @Ignore("Requires ring member selection implementation")
+    @Ignore
     fun `C5-4 ring members follow decoy selection distribution`() {
         // Verify gamma distribution for decoy selection
         // Real output should be statistically indistinguishable
@@ -89,7 +89,7 @@ class TransactionConformanceTest {
     // ========== Range Proof Validation ==========
     
     @Test
-    @Ignore("Requires Bulletproofs+ implementation")
+    @Ignore
     fun `C5-5 bulletproofs plus verify for outputs`() {
         // Each output amount is hidden behind Pedersen commitment
         // Bulletproofs+ prove amount is in [0, 2^64)
@@ -104,7 +104,7 @@ class TransactionConformanceTest {
     // ========== Fee Calculation ==========
     
     @Test
-    @Ignore("Requires full transaction builder")
+    @Ignore
     fun `C5-6 fee calculation matches expected formula`() {
         // fee = tx_weight * fee_per_byte
         // tx_weight = tx_blob_size + (bp_clawback / 4)
@@ -128,14 +128,14 @@ class TransactionConformanceTest {
         // Must be unique per output to prevent double-spend
         
         // Generate test key pair
-        val seed = "test_seed_for_key_image_derivation_test".toByteArray()
+        val seed = "test_seed_for_key_image_derivation_test".encodeToByteArray()
         val seedHash = Keccak.hash256(seed)
         
         // Simulate key image derivation:
         // In real implementation: key_image = sc_reduce32(seed) * Hp(pubkey)
-        val keyImage1 = Keccak.hash256(seedHash + "output_1".toByteArray())
-        val keyImage2 = Keccak.hash256(seedHash + "output_1".toByteArray())
-        val keyImage3 = Keccak.hash256(seedHash + "output_2".toByteArray())
+        val keyImage1 = Keccak.hash256(seedHash + "output_1".encodeToByteArray())
+        val keyImage2 = Keccak.hash256(seedHash + "output_1".encodeToByteArray())
+        val keyImage3 = Keccak.hash256(seedHash + "output_2".encodeToByteArray())
         
         // Same input → same key image
         assertEquals(keyImage1.toList(), keyImage2.toList(), 
@@ -182,7 +182,7 @@ class TransactionConformanceTest {
     // ========== Cross-Implementation Conformance ==========
     
     @Test
-    @Ignore("Requires Dart implementation and real tx comparison")
+    @Ignore
     fun `C5-9 KMP and Dart produce identical key images`() {
         // Given: Same wallet keys and output data
         // When: Both implementations derive key images
@@ -195,7 +195,7 @@ class TransactionConformanceTest {
     }
     
     @Test
-    @Ignore("Requires Dart implementation and real tx comparison")  
+    @Ignore  
     fun `C5-10 KMP and Dart transactions accepted by monerod`() {
         // Ultimate conformance test:
         // 1. Build same transaction with KMP
@@ -269,7 +269,7 @@ class TransactionConformanceTest {
     // ========== Network Acceptance Criteria ==========
     
     @Test
-    @Ignore("Requires stagenet connection")
+    @Ignore
     fun `C5-14 transaction meets minimum relay requirements`() {
         // For a transaction to be relayed:
         // - Fee >= calculated minimum

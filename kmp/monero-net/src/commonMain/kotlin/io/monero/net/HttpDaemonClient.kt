@@ -113,7 +113,7 @@ class HttpDaemonClient(
     }
 
     override suspend fun sendRawTransaction(txBlob: ByteArray): TxSubmitResult {
-        val hexBlob = txBlob.joinToString("") { "%02x".format(it) }
+        val hexBlob = txBlob.joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
         val body = buildJsonObject {
             put("tx_as_hex", hexBlob)
             put("do_not_relay", false)

@@ -141,7 +141,7 @@ object Base58 {
             num /= 58UL
         }
 
-        return String(chars)
+        return chars.concatToString()
     }
 
     /**

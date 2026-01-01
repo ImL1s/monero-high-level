@@ -1,6 +1,7 @@
 package io.monero.net
 
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 import kotlin.test.Test
 import kotlin.test.Ignore
 import kotlin.test.assertTrue
@@ -152,7 +153,7 @@ class StagenetEndToEndTest {
             
             var totalTxs = 0
             var blocksFetched = 0
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             
             for (h in startHeight until endHeight) {
                 val block = client.getBlockByHeight(h)
@@ -164,7 +165,7 @@ class StagenetEndToEndTest {
                 }
             }
             
-            val elapsed = System.currentTimeMillis() - startTime
+            val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
             
             println("\n=== Results ===")
             println("Blocks fetched: $blocksFetched")
@@ -197,7 +198,7 @@ class StagenetEndToEndTest {
             var scannedHeight = restoreHeight
             var blocksScanned = 0
             var outputsFound = 0 // Would count matching outputs
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             
             println("\nScanning blocks...")
             
@@ -218,7 +219,7 @@ class StagenetEndToEndTest {
                 }
             }
             
-            val elapsed = System.currentTimeMillis() - startTime
+            val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
             
             println("\n=== Sync Summary ===")
             println("Blocks scanned: $blocksScanned")

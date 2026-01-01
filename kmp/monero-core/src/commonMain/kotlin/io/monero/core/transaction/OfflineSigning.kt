@@ -206,7 +206,7 @@ object OfflineSigning {
     // Hex utilities
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+    private fun ByteArray.toHex(): String = joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
 
     private fun String.hexToBytes(): ByteArray {
         require(length % 2 == 0) { "Hex string must have even length" }

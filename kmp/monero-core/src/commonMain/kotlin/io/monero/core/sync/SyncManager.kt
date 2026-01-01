@@ -5,6 +5,7 @@ import io.monero.core.transaction.OwnedOutput
 import io.monero.core.transaction.Transaction
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.datetime.Clock
 
 /**
  * Sync state representing the current synchronization status
@@ -18,11 +19,11 @@ sealed class SyncState {
         val currentHeight: Long,
         val targetHeight: Long,
         val blocksProcessed: Long,
-        val startTime: Long = System.currentTimeMillis()
+        val startTime: Long = Clock.System.now().toEpochMilliseconds()
     ) : SyncState() {
         val progress: Float get() = if (targetHeight > 0) currentHeight.toFloat() / targetHeight else 0f
         val blocksPerSecond: Float get() {
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000f
+            val elapsed = (Clock.System.now().toEpochMilliseconds() - startTime) / 1000f
             return if (elapsed > 0) blocksProcessed / elapsed else 0f
         }
         val estimatedSecondsRemaining: Float get() {
@@ -187,7 +188,7 @@ class SyncManager(
             return
         }
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var blocksProcessed = 0L
         var currentHeight = startHeight
         

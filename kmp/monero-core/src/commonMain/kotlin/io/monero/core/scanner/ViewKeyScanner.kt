@@ -247,5 +247,5 @@ class SubaddressTable {
     
     val size: Int get() = table.size
     
-    private fun ByteArray.toHex() = joinToString("") { "%02x".format(it) }
+    private fun ByteArray.toHex() = joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
 }

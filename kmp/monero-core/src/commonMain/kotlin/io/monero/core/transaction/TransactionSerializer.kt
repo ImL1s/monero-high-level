@@ -107,7 +107,7 @@ object TransactionSerializer {
      * Serialize to hex string.
      */
     fun serializeToHex(tx: Transaction): String {
-        return serialize(tx).joinToString("") { "%02x".format(it) }
+        return serialize(tx).joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
     }
 
     private fun serializeInput(writer: BinaryWriter, input: TxInput, isCoinbase: Boolean) {

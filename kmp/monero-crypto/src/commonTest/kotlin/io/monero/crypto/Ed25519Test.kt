@@ -160,13 +160,8 @@ class Ed25519Test {
     }
 
     private fun hexToBytes(hex: String): ByteArray {
-        val len = hex.length
-        val data = ByteArray(len / 2)
-        var i = 0
-        while (i < len) {
-            data[i / 2] = ((Character.digit(hex[i], 16) shl 4) + Character.digit(hex[i + 1], 16)).toByte()
-            i += 2
-        }
-        return data
+        return hex.chunked(2)
+            .map { it.toInt(16).toByte() }
+            .toByteArray()
     }
 }

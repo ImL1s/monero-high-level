@@ -56,13 +56,20 @@ data class TxOutput(
  * Key image used to prevent double-spending
  */
 @Serializable
-@JvmInline
-value class KeyImage(val bytes: ByteArray) {
+data class KeyImage(val bytes: ByteArray) {
     init {
         require(bytes.size == 32) { "Key image must be 32 bytes" }
     }
     
-    fun toHex(): String = bytes.joinToString("") { "%02x".format(it) }
+    fun toHex(): String = bytes.joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is KeyImage) return false
+        return bytes.contentEquals(other.bytes)
+    }
+    
+    override fun hashCode(): Int = bytes.contentHashCode()
     
     companion object {
         fun fromHex(hex: String): KeyImage {
@@ -312,7 +319,7 @@ data class OwnedOutput(
     val outpoint: String
         get() = "${txHash.toHex()}:$outputIndex"
     
-    private fun ByteArray.toHex() = joinToString("") { "%02x".format(it) }
+    private fun ByteArray.toHex() = joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
 }
 
 /**

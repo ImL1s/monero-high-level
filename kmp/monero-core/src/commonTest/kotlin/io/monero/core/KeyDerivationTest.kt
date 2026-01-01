@@ -98,7 +98,7 @@ class KeyDerivationTest {
     }
 
     @Test
-    fun `derive subaddress (0,0) returns main address keys`() {
+    fun `derive subaddress at 0-0 returns main address keys`() {
         val seed = ByteArray(32) { 0x42.toByte() }
         val keys = KeyDerivation.deriveWalletKeys(seed)
         val subKeys = KeyDerivation.deriveSubaddress(keys, 0, 0)
@@ -108,7 +108,7 @@ class KeyDerivationTest {
     }
 
     @Test
-    fun `derive subaddress (0,1) produces different keys`() {
+    fun `derive subaddress at 0-1 produces different keys`() {
         val seed = ByteArray(32) { 0x42.toByte() }
         val keys = KeyDerivation.deriveWalletKeys(seed)
         val subKeys = KeyDerivation.deriveSubaddress(keys, 0, 1)

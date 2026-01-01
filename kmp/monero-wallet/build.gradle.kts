@@ -12,13 +12,8 @@ kotlin {
         }
     }
 
-    macosArm64 {
-        binaries.framework {
-            baseName = "MoneroWallet"
-            isStatic = true
-        }
-    }
-
+    // Native targets disabled - requires BigInteger abstraction
+    // macosArm64 { ... }
     // iOS targets disabled for now - requires iOS SDK
     // listOf(iosX64(), iosArm64(), iosSimulatorArm64())...
 
@@ -51,7 +46,5 @@ kotlin {
                 implementation(libs.mockk)
             }
         }
-
-        val macosArm64Main by getting
     }
 }
