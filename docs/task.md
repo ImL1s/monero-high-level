@@ -75,7 +75,7 @@
 - [x] **D4.3**: 實作/驗證 CLSAG.
 - [x] **D4.4**: 實作交易序列化.
 - [x] **D4.5**: 實作 `TxBuilder`.
-- [ ] **D4.6**: 支援常用交易類型：一般轉帳、批次轉帳、sweep/sweep_all（視需求分批完成）。
+- [x] **D4.6**: 支援常用交易類型：一般轉帳、批次轉帳、sweep/sweep_all（視需求分批完成）。
 - [x] **D4.7**: 離線簽名格式：export unsigned / import signed / relay.
 
 ## Phase 5: 儲存與進階功能 (Storage & Advanced)

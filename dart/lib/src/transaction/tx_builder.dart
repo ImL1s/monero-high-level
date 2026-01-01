@@ -429,6 +429,73 @@ class TxBuilder {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // D4.6 – Common transaction type helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Simple transfer to a single recipient.
+  ///
+  /// Convenience wrapper around [build] for the most common case:
+  /// send [amount] to [destinationAddress], returning change to [changeAddress].
+  Future<BuiltTx> transfer({
+    required List<SpendableOutput> availableOutputs,
+    required MoneroAddress destinationAddress,
+    required int amount,
+    required MoneroAddress changeAddress,
+    RctType rctType = RctType.clsag,
+    Uint8List? paymentId,
+    SelectionStrategy selectionStrategy = SelectionStrategy.closestMatch,
+  }) {
+    return build(
+      availableOutputs: availableOutputs,
+      destinations: [TxDestination(address: destinationAddress, amount: amount)],
+      changeAddress: changeAddress,
+      rctType: rctType,
+      paymentId: paymentId,
+      selectionStrategy: selectionStrategy,
+    );
+  }
+
+  /// Batch transfer to multiple recipients in a single transaction.
+  ///
+  /// Alias for [build] with explicit naming for batch operations.
+  /// All destinations share the same change address and transaction fee.
+  Future<BuiltTx> transferBatch({
+    required List<SpendableOutput> availableOutputs,
+    required List<TxDestination> destinations,
+    required MoneroAddress changeAddress,
+    RctType rctType = RctType.clsag,
+    Uint8List? paymentId,
+    SelectionStrategy selectionStrategy = SelectionStrategy.closestMatch,
+  }) {
+    return build(
+      availableOutputs: availableOutputs,
+      destinations: destinations,
+      changeAddress: changeAddress,
+      rctType: rctType,
+      paymentId: paymentId,
+      selectionStrategy: selectionStrategy,
+    );
+  }
+
+  /// Sweep a single output to a destination address.
+  ///
+  /// Useful for consolidating dust or cleaning up individual UTXOs.
+  /// The entire output value (minus fee) goes to [destinationAddress].
+  Future<BuiltTx> sweepSingle({
+    required SpendableOutput output,
+    required MoneroAddress destinationAddress,
+    RctType rctType = RctType.clsag,
+    Uint8List? paymentId,
+  }) {
+    return sweepAll(
+      availableOutputs: [output],
+      destinationAddress: destinationAddress,
+      rctType: rctType,
+      paymentId: paymentId,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Private helpers
   // ─────────────────────────────────────────────────────────────────────────
 
