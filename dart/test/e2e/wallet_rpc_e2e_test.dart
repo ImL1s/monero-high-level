@@ -76,8 +76,34 @@ void main() {
         await client.createWallet(filename: walletName, password: walletPassword);
         await client.openWallet(filename: walletName, password: walletPassword);
 
+        final languages = await client.getLanguages();
+        expect(languages, isNotEmpty);
+
         final addr = await client.getAddress();
         expect(addr.address, isNotEmpty);
+
+        final validate = await client.validateAddress(
+          address: addr.address,
+          anyNetType: true,
+          allowOpenalias: true,
+        );
+        expect(validate.valid, isTrue);
+
+        final integrated = await client.makeIntegratedAddress(
+          standardAddress: addr.address,
+          paymentId: '1234567890123456',
+        );
+        expect(integrated.integratedAddress, isNotEmpty);
+        expect(integrated.paymentId, equals('1234567890123456'));
+
+        final split = await client.splitIntegratedAddress(
+          integratedAddress: integrated.integratedAddress,
+        );
+        expect(split.standardAddress, equals(addr.address));
+        expect(split.paymentId, equals('1234567890123456'));
+
+        final mnemonic = await client.queryKey('mnemonic');
+        expect(mnemonic.key, isNotEmpty);
 
         const msg = 'hello-e2e';
         final sig = await client.sign(msg);
@@ -88,6 +114,10 @@ void main() {
 
         final multisig = await client.isMultisig();
         expect(multisig.multisig, isFalse);
+
+        await client.store();
+        await client.closeWallet();
+        await client.openWallet(filename: walletName, password: walletPassword);
       } finally {
         client.close();
         proc.kill(ProcessSignal.sigterm);
