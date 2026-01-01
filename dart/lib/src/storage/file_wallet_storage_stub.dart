@@ -73,6 +73,25 @@ class FileWalletStorage implements WalletStorage {
   Future<void> thawOutput(Uint8List keyImage) => Future.value();
 
   @override
+  Future<ExportedOutputs> exportOutputs({bool all = false}) =>
+      Future.value(const ExportedOutputs(outputs: []));
+
+  @override
+  Future<int> importOutputs(ExportedOutputs data) => Future.value(0);
+
+  @override
+  Future<ExportedKeyImages> exportKeyImages({bool all = false}) =>
+      Future.value(const ExportedKeyImages(keyImages: []));
+
+  @override
+  Future<KeyImageImportResult> importKeyImages(ExportedKeyImages data) =>
+      Future.value(KeyImageImportResult(
+        imported: 0,
+        spent: BigInt.zero,
+        unspent: BigInt.zero,
+      ));
+
+  @override
   Future<void> saveTransaction(StoredTransaction tx) => Future.error(
         UnsupportedError('FileWalletStorage is only supported on IO platforms'),
       );

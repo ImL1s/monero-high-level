@@ -234,6 +234,135 @@ class FileWalletStorage implements WalletStorage {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Output export/import
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @override
+  Future<ExportedOutputs> exportOutputs({bool all = false}) async {
+    _requireOpen();
+    final outputs = _outputsByKeyImage.values.where((o) => all || !o.spent);
+    return ExportedOutputs(
+      outputs: outputs.map((o) => ExportedOutput(
+        txHash: o.txHash,
+        outputIndex: o.localIndex,
+        amount: o.amount,
+        globalIndex: o.globalIndex,
+        accountIndex: o.accountIndex,
+        subaddressIndex: o.subaddressIndex,
+        txPubKey: o.publicKey, // Using output pubkey as txPubKey for simplicity
+        unlockTime: o.unlockTime,
+      )).toList(),
+    );
+  }
+
+  @override
+  Future<int> importOutputs(ExportedOutputs data) async {
+    _requireOpen();
+    var imported = 0;
+    for (final exported in data.outputs) {
+      // Create a temporary key image from tx hash + index (placeholder)
+      // Real implementation would derive key image from output data
+      final keyImagePlaceholder = Uint8List.fromList([
+        ...exported.txHash.take(24),
+        ...[(exported.outputIndex >> 24) & 0xff],
+        ...[(exported.outputIndex >> 16) & 0xff],
+        ...[(exported.outputIndex >> 8) & 0xff],
+        ...[exported.outputIndex & 0xff],
+        ...List.filled(4, 0),
+      ]);
+      final key = _bytesToHex(keyImagePlaceholder);
+      if (_outputsByKeyImage.containsKey(key)) continue;
+
+      _outputsByKeyImage[key] = StoredOutput(
+        keyImage: keyImagePlaceholder,
+        publicKey: exported.txPubKey,
+        amount: exported.amount,
+        globalIndex: exported.globalIndex ?? 0,
+        txHash: exported.txHash,
+        localIndex: exported.outputIndex,
+        height: 0, // Unknown from exported data
+        accountIndex: exported.accountIndex,
+        subaddressIndex: exported.subaddressIndex,
+        spent: false,
+        spendingTxHash: null,
+        frozen: false,
+        unlockTime: exported.unlockTime,
+      );
+      imported++;
+    }
+    if (imported > 0) await _persist();
+    return imported;
+  }
+
+  @override
+  Future<ExportedKeyImages> exportKeyImages({bool all = false}) async {
+    _requireOpen();
+    final outputs = _outputsByKeyImage.values.where((o) => all || !o.spent);
+    return ExportedKeyImages(
+      keyImages: outputs.map((o) => KeyImageEntry(
+        txHash: o.txHash,
+        outputIndex: o.localIndex,
+        keyImage: o.keyImage,
+        signature: null, // Would need spend key to create signature
+      )).toList(),
+    );
+  }
+
+  @override
+  Future<KeyImageImportResult> importKeyImages(ExportedKeyImages data) async {
+    _requireOpen();
+    var imported = 0;
+    var spent = BigInt.zero;
+    var unspent = BigInt.zero;
+
+    for (final entry in data.keyImages) {
+      // Find output by tx hash + index
+      final matching = _outputsByKeyImage.values.where((o) =>
+          _listEquals(o.txHash, entry.txHash) &&
+          o.localIndex == entry.outputIndex
+      ).toList();
+
+      for (final output in matching) {
+        final key = _bytesToHex(output.keyImage);
+        // Update key image if different
+        final newKeyImage = entry.keyImage;
+        if (!_listEquals(output.keyImage, newKeyImage)) {
+          _outputsByKeyImage.remove(key);
+          final newKey = _bytesToHex(newKeyImage);
+          _outputsByKeyImage[newKey] = StoredOutput(
+            keyImage: newKeyImage,
+            publicKey: output.publicKey,
+            amount: output.amount,
+            globalIndex: output.globalIndex,
+            txHash: output.txHash,
+            localIndex: output.localIndex,
+            height: output.height,
+            accountIndex: output.accountIndex,
+            subaddressIndex: output.subaddressIndex,
+            spent: output.spent,
+            spendingTxHash: output.spendingTxHash,
+            frozen: output.frozen,
+            unlockTime: output.unlockTime,
+          );
+        }
+        imported++;
+        if (output.spent) {
+          spent += output.amount;
+        } else {
+          unspent += output.amount;
+        }
+      }
+    }
+
+    if (imported > 0) await _persist();
+    return KeyImageImportResult(
+      imported: imported,
+      spent: spent,
+      unspent: unspent,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Transactions
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -726,4 +855,12 @@ Uint8List _hexToBytes(String hex) {
     out[i] = int.parse(byteHex, radix: 16);
   }
   return out;
+}
+
+bool _listEquals(Uint8List a, Uint8List b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

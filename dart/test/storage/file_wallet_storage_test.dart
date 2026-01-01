@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:monero_dart/monero_dart.dart';
+import 'package:monero_dart/src/storage/wallet_storage.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -223,5 +224,149 @@ void main() {
     } finally {
       await dir.delete(recursive: true);
     }
+  });
+
+  test('Export and import outputs', () async {
+    final dir = await Directory.systemTemp.createTemp('monero_dart_wallet_');
+    try {
+      final path1 = '${dir.path}/wallet1';
+      final path2 = '${dir.path}/wallet2';
+
+      // Create wallet 1 with outputs
+      final storage1 = FileWalletStorage();
+      await storage1.open(path1, 'pw', create: true);
+
+      final keyImage = Uint8List.fromList(List<int>.generate(32, (i) => i));
+      final publicKey = Uint8List.fromList(List<int>.generate(32, (i) => 255 - i));
+      final txHash = Uint8List.fromList(List<int>.generate(32, (i) => (i * 3) & 0xff));
+
+      await storage1.saveOutput(
+        StoredOutput(
+          keyImage: keyImage,
+          publicKey: publicKey,
+          amount: BigInt.from(5000),
+          globalIndex: 200,
+          txHash: txHash,
+          localIndex: 0,
+          height: 1000,
+          accountIndex: 0,
+          subaddressIndex: 1,
+          spent: false,
+          frozen: false,
+          unlockTime: 0,
+        ),
+      );
+
+      // Export outputs
+      final exported = await storage1.exportOutputs();
+      expect(exported.outputs.length, 1);
+      expect(exported.outputs[0].amount, BigInt.from(5000));
+
+      // Create wallet 2 and import
+      final storage2 = FileWalletStorage();
+      await storage2.open(path2, 'pw', create: true);
+
+      final importedCount = await storage2.importOutputs(exported);
+      expect(importedCount, 1);
+
+      final outputs2 = await storage2.getOutputs();
+      expect(outputs2.length, 1);
+      expect(outputs2[0].amount, BigInt.from(5000));
+
+      await storage1.close();
+      await storage2.close();
+    } finally {
+      await dir.delete(recursive: true);
+    }
+  });
+
+  test('Export and import key images', () async {
+    final dir = await Directory.systemTemp.createTemp('monero_dart_wallet_');
+    try {
+      final path = '${dir.path}/test_wallet';
+      final storage = FileWalletStorage();
+      await storage.open(path, 'pw', create: true);
+
+      final keyImage = Uint8List.fromList(List<int>.generate(32, (i) => i));
+      final publicKey = Uint8List.fromList(List<int>.generate(32, (i) => 255 - i));
+      final txHash = Uint8List.fromList(List<int>.generate(32, (i) => (i * 3) & 0xff));
+
+      await storage.saveOutput(
+        StoredOutput(
+          keyImage: keyImage,
+          publicKey: publicKey,
+          amount: BigInt.from(3000),
+          globalIndex: 150,
+          txHash: txHash,
+          localIndex: 0,
+          height: 800,
+          accountIndex: 0,
+          subaddressIndex: 0,
+          spent: false,
+          frozen: false,
+          unlockTime: 0,
+        ),
+      );
+
+      // Export key images
+      final exported = await storage.exportKeyImages();
+      expect(exported.keyImages.length, 1);
+      expect(exported.keyImages[0].outputIndex, 0);
+
+      // Import key images (same wallet, just testing the API)
+      final result = await storage.importKeyImages(exported);
+      expect(result.imported, 1);
+      expect(result.unspent, BigInt.from(3000));
+
+      await storage.close();
+    } finally {
+      await dir.delete(recursive: true);
+    }
+  });
+
+  test('ExportedOutputs JSON serialization', () {
+    final exported = ExportedOutputs(
+      outputs: [
+        ExportedOutput(
+          txHash: Uint8List.fromList(List.filled(32, 0xab)),
+          outputIndex: 1,
+          amount: BigInt.from(1000000),
+          globalIndex: 500,
+          accountIndex: 0,
+          subaddressIndex: 2,
+          txPubKey: Uint8List.fromList(List.filled(32, 0xcd)),
+          unlockTime: 0,
+        ),
+      ],
+    );
+
+    final json = exported.toJson();
+    final restored = ExportedOutputs.fromJson(json);
+
+    expect(restored.version, exported.version);
+    expect(restored.outputs.length, 1);
+    expect(restored.outputs[0].amount, BigInt.from(1000000));
+    expect(restored.outputs[0].globalIndex, 500);
+  });
+
+  test('ExportedKeyImages JSON serialization', () {
+    final exported = ExportedKeyImages(
+      keyImages: [
+        KeyImageEntry(
+          txHash: Uint8List.fromList(List.filled(32, 0x11)),
+          outputIndex: 0,
+          keyImage: Uint8List.fromList(List.filled(32, 0x22)),
+          signature: Uint8List.fromList(List.filled(64, 0x33)),
+        ),
+      ],
+    );
+
+    final json = exported.toJson();
+    final restored = ExportedKeyImages.fromJson(json);
+
+    expect(restored.version, exported.version);
+    expect(restored.keyImages.length, 1);
+    expect(restored.keyImages[0].outputIndex, 0);
+    expect(restored.keyImages[0].signature, isNotNull);
   });
 }

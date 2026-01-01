@@ -38,6 +38,12 @@ abstract class WalletStorage {
   Future<void> freezeOutput(Uint8List keyImage);
   Future<void> thawOutput(Uint8List keyImage);
 
+  // Output export/import (for view-only / offline signing workflow)
+  Future<ExportedOutputs> exportOutputs({bool all = false});
+  Future<int> importOutputs(ExportedOutputs data);
+  Future<ExportedKeyImages> exportKeyImages({bool all = false});
+  Future<KeyImageImportResult> importKeyImages(ExportedKeyImages data);
+
   // Transactions
   Future<void> saveTransaction(StoredTransaction tx);
   Future<StoredTransaction?> getTransaction(Uint8List hash);
@@ -197,6 +203,139 @@ class AddressBookEntry {
   });
 }
 
+/// Exported output for view-only wallet sync
+class ExportedOutput {
+  final Uint8List txHash;
+  final int outputIndex;
+  final BigInt amount;
+  final int? globalIndex;
+  final int accountIndex;
+  final int subaddressIndex;
+  final Uint8List txPubKey;
+  final int unlockTime;
+
+  const ExportedOutput({
+    required this.txHash,
+    required this.outputIndex,
+    required this.amount,
+    this.globalIndex,
+    required this.accountIndex,
+    required this.subaddressIndex,
+    required this.txPubKey,
+    required this.unlockTime,
+  });
+
+  Map<String, Object?> toJson() => {
+    'txHash': _bytesToHex(txHash),
+    'outputIndex': outputIndex,
+    'amount': amount.toString(),
+    'globalIndex': globalIndex,
+    'accountIndex': accountIndex,
+    'subaddressIndex': subaddressIndex,
+    'txPubKey': _bytesToHex(txPubKey),
+    'unlockTime': unlockTime,
+  };
+
+  factory ExportedOutput.fromJson(Map<String, Object?> json) => ExportedOutput(
+    txHash: _hexToBytes(json['txHash'] as String),
+    outputIndex: json['outputIndex'] as int,
+    amount: BigInt.parse(json['amount'] as String),
+    globalIndex: json['globalIndex'] as int?,
+    accountIndex: json['accountIndex'] as int,
+    subaddressIndex: json['subaddressIndex'] as int,
+    txPubKey: _hexToBytes(json['txPubKey'] as String),
+    unlockTime: json['unlockTime'] as int,
+  );
+}
+
+/// Exported outputs container
+class ExportedOutputs {
+  final int version;
+  final List<ExportedOutput> outputs;
+
+  const ExportedOutputs({
+    this.version = 1,
+    required this.outputs,
+  });
+
+  Map<String, Object?> toJson() => {
+    'version': version,
+    'outputs': outputs.map((o) => o.toJson()).toList(),
+  };
+
+  factory ExportedOutputs.fromJson(Map<String, Object?> json) => ExportedOutputs(
+    version: json['version'] as int,
+    outputs: (json['outputs'] as List).cast<Map<String, Object?>>()
+        .map(ExportedOutput.fromJson).toList(),
+  );
+}
+
+/// Key image entry for export/import
+class KeyImageEntry {
+  final Uint8List txHash;
+  final int outputIndex;
+  final Uint8List keyImage;
+  final Uint8List? signature;
+
+  const KeyImageEntry({
+    required this.txHash,
+    required this.outputIndex,
+    required this.keyImage,
+    this.signature,
+  });
+
+  Map<String, Object?> toJson() => {
+    'txHash': _bytesToHex(txHash),
+    'outputIndex': outputIndex,
+    'keyImage': _bytesToHex(keyImage),
+    if (signature != null) 'signature': _bytesToHex(signature!),
+  };
+
+  factory KeyImageEntry.fromJson(Map<String, Object?> json) => KeyImageEntry(
+    txHash: _hexToBytes(json['txHash'] as String),
+    outputIndex: json['outputIndex'] as int,
+    keyImage: _hexToBytes(json['keyImage'] as String),
+    signature: json['signature'] != null
+        ? _hexToBytes(json['signature'] as String)
+        : null,
+  );
+}
+
+/// Exported key images container
+class ExportedKeyImages {
+  final int version;
+  final List<KeyImageEntry> keyImages;
+
+  const ExportedKeyImages({
+    this.version = 1,
+    required this.keyImages,
+  });
+
+  Map<String, Object?> toJson() => {
+    'version': version,
+    'keyImages': keyImages.map((k) => k.toJson()).toList(),
+  };
+
+  factory ExportedKeyImages.fromJson(Map<String, Object?> json) => ExportedKeyImages(
+    version: json['version'] as int,
+    keyImages: (json['keyImages'] as List).cast<Map<String, Object?>>()
+        .map(KeyImageEntry.fromJson).toList(),
+  );
+}
+
+/// Result of importing key images
+class KeyImageImportResult {
+  final int imported;
+  final BigInt spent;
+  final BigInt unspent;
+
+  const KeyImageImportResult({
+    required this.imported,
+    required this.spent,
+    required this.unspent,
+  });
+}
+
 // Utility for list comparison
 bool _listEquals(Uint8List a, Uint8List b) {
   if (a.length != b.length) return false;
@@ -204,4 +343,15 @@ bool _listEquals(Uint8List a, Uint8List b) {
     if (a[i] != b[i]) return false;
   }
   return true;
+}
+
+String _bytesToHex(Uint8List bytes) =>
+    bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+Uint8List _hexToBytes(String hex) {
+  final result = Uint8List(hex.length ~/ 2);
+  for (var i = 0; i < result.length; i++) {
+    result[i] = int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16);
+  }
+  return result;
 }
