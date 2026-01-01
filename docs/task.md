@@ -93,7 +93,7 @@
 ### Dart
 - [x] **D5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
 - [x] **D5.1**: 實作本地儲存 (Hive, SQLite, or File).
-- [ ] **D5.2**: 實作錢包加密保存.
+- [x] **D5.2**: 實作錢包加密保存.
 - [ ] **D5.3**: 實作多重簽名支援 (Optional).
 - [ ] **D5.4**: 交易/轉帳/輸出查詢 API（依 hash/方向/確認狀態/account/subaddress）.
 - [ ] **D5.5**: Address Book + Tx Notes（新增/刪除/查詢/更新）.
