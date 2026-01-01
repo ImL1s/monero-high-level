@@ -190,6 +190,19 @@ object Ed25519 {
     }
 
     /**
+     * Hash data to a scalar: Hs(data)
+     * Returns Keccak256(data) reduced mod L
+     */
+    fun hashToScalar(data: ByteArray): ByteArray {
+        val hash = Keccak.hash256(data)
+        // Reduce the 32-byte hash to a valid scalar mod L
+        // For a 32-byte input, we extend to 64 bytes for proper reduction
+        val extended = ByteArray(64)
+        hash.copyInto(extended)
+        return scalarReduce64(extended)
+    }
+
+    /**
      * Check if a point is valid (on the curve and in the subgroup)
      */
     fun isValidPoint(point: ByteArray): Boolean {
