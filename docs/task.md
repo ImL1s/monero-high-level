@@ -91,7 +91,7 @@
 - [ ] **K5.7**: 證明工具（tx proof / reserve proof / message sign/verify）(Optional).
 
 ### Dart
-- [ ] **D5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
+- [x] **D5.0**: 錢包生命週期與帳戶/子地址管理（create/open/close/restore；view-only/offline 類型；accounts/subaddresses/labels；各帳戶餘額）.
 - [ ] **D5.1**: 實作本地儲存 (Hive, SQLite, or File).
 - [ ] **D5.2**: 實作錢包加密保存.
 - [ ] **D5.3**: 實作多重簽名支援 (Optional).

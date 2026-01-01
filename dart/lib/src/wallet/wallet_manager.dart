@@ -269,28 +269,6 @@ abstract class SubaddressManager {
   Future<int> getSubaddressCount(MoneroWallet wallet, int accountIndex);
 }
 
-/// Subaddress index pair for convenience.
-class SubaddressIndex {
-  final int major;
-  final int minor;
-
-  const SubaddressIndex({required this.major, required this.minor});
-
-  /// Main account, primary address.
-  static const main = SubaddressIndex(major: 0, minor: 0);
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SubaddressIndex && major == other.major && minor == other.minor;
-
-  @override
-  int get hashCode => Object.hash(major, minor);
-
-  @override
-  String toString() => 'SubaddressIndex($major, $minor)';
-}
-
 /// Extended wallet balance with per-account breakdown.
 class AccountBalance {
   final int accountIndex;

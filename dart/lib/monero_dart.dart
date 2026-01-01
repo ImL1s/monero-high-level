@@ -31,6 +31,7 @@ export 'src/network/rpc_utils.dart';
 
 // Storage
 export 'src/storage/wallet_storage.dart' hide WalletStorage;
+export 'src/storage/file_wallet_storage.dart' hide WalletStorage;
 
 // Transaction
 export 'src/transaction/builder.dart';
