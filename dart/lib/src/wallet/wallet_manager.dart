@@ -8,6 +8,7 @@ library;
 
 import 'dart:typed_data';
 
+import '../storage/wallet_storage.dart';
 import 'wallet.dart';
 
 /// Wallet type indicating available operations.
@@ -322,6 +323,31 @@ class OutputFilter {
 
   static const all = OutputFilter(includeSpent: true, includeFrozen: true);
   static const spendable = OutputFilter(includeSpent: false, includeFrozen: false);
+
+  /// Check if output matches this filter criteria.
+  bool matches(StoredOutput output) {
+    // Spent filter
+    if (!includeSpent && output.spent) return false;
+
+    // Frozen filter
+    if (!includeFrozen && output.frozen) return false;
+
+    // Account filter
+    if (accountIndex != null && output.accountIndex != accountIndex) {
+      return false;
+    }
+
+    // Subaddress filter
+    if (subaddressIndex != null && output.subaddressIndex != subaddressIndex) {
+      return false;
+    }
+
+    // Amount range filter
+    if (minAmount != null && output.amount < minAmount!) return false;
+    if (maxAmount != null && output.amount > maxAmount!) return false;
+
+    return true;
+  }
 }
 
 /// Transaction filter options for queries.
@@ -347,6 +373,18 @@ class TransactionFilter {
   /// Payment ID filter
   final String? paymentId;
 
+  /// Minimum timestamp (Unix epoch seconds)
+  final int? fromTimestamp;
+
+  /// Maximum timestamp (Unix epoch seconds)
+  final int? toTimestamp;
+
+  /// Minimum amount
+  final BigInt? minAmount;
+
+  /// Maximum amount
+  final BigInt? maxAmount;
+
   const TransactionFilter({
     this.accountIndex,
     this.subaddressIndex,
@@ -355,10 +393,61 @@ class TransactionFilter {
     this.minHeight,
     this.maxHeight,
     this.paymentId,
+    this.fromTimestamp,
+    this.toTimestamp,
+    this.minAmount,
+    this.maxAmount,
   });
 
   static const all = TransactionFilter();
   static const confirmed = TransactionFilter(includePending: false);
   static const incomingOnly = TransactionFilter(incoming: true);
   static const outgoingOnly = TransactionFilter(incoming: false);
+
+  /// Check if transaction matches this filter criteria.
+  bool matches(StoredTransaction tx) {
+    // Pending filter
+    if (!includePending && tx.height == null) return false;
+
+    // Account filter
+    if (accountIndex != null && tx.accountIndex != accountIndex) return false;
+
+    // Subaddress filter
+    if (subaddressIndex != null &&
+        !tx.subaddressIndices.contains(subaddressIndex)) {
+      return false;
+    }
+
+    // Direction filter
+    if (incoming != null && tx.incoming != incoming) return false;
+
+    // Height range filter
+    if (minHeight != null) {
+      if (tx.height == null || tx.height! < minHeight!) return false;
+    }
+    if (maxHeight != null) {
+      if (tx.height == null || tx.height! > maxHeight!) return false;
+    }
+
+    // Timestamp range filter
+    if (fromTimestamp != null && tx.timestamp < fromTimestamp!) return false;
+    if (toTimestamp != null && tx.timestamp > toTimestamp!) return false;
+
+    // Amount range filter
+    if (minAmount != null && tx.amount < minAmount!) return false;
+    if (maxAmount != null && tx.amount > maxAmount!) return false;
+
+    // Payment ID filter
+    if (paymentId != null) {
+      if (tx.paymentId == null) return false;
+      final txPaymentIdHex = _bytesToHex(tx.paymentId!);
+      if (!txPaymentIdHex.contains(paymentId!.toLowerCase())) return false;
+    }
+
+    return true;
+  }
+}
+
+String _bytesToHex(Uint8List bytes) {
+  return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 }

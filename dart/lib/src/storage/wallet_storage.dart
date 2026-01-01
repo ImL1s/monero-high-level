@@ -35,6 +35,8 @@ abstract class WalletStorage {
   Future<StoredOutput?> getOutput(Uint8List keyImage);
   Future<void> markOutputSpent(Uint8List keyImage, Uint8List spendingTxHash);
   Future<void> deleteOutput(Uint8List keyImage);
+  Future<void> freezeOutput(Uint8List keyImage);
+  Future<void> thawOutput(Uint8List keyImage);
 
   // Transactions
   Future<void> saveTransaction(StoredTransaction tx);

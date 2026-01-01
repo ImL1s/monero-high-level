@@ -185,6 +185,54 @@ class FileWalletStorage implements WalletStorage {
     await _persist();
   }
 
+  @override
+  Future<void> freezeOutput(Uint8List keyImage) async {
+    _requireOpen();
+    final key = _bytesToHex(keyImage);
+    final existing = _outputsByKeyImage[key];
+    if (existing == null || existing.frozen) return;
+    _outputsByKeyImage[key] = StoredOutput(
+      keyImage: existing.keyImage,
+      publicKey: existing.publicKey,
+      amount: existing.amount,
+      globalIndex: existing.globalIndex,
+      txHash: existing.txHash,
+      localIndex: existing.localIndex,
+      height: existing.height,
+      accountIndex: existing.accountIndex,
+      subaddressIndex: existing.subaddressIndex,
+      spent: existing.spent,
+      spendingTxHash: existing.spendingTxHash,
+      frozen: true,
+      unlockTime: existing.unlockTime,
+    );
+    await _persist();
+  }
+
+  @override
+  Future<void> thawOutput(Uint8List keyImage) async {
+    _requireOpen();
+    final key = _bytesToHex(keyImage);
+    final existing = _outputsByKeyImage[key];
+    if (existing == null || !existing.frozen) return;
+    _outputsByKeyImage[key] = StoredOutput(
+      keyImage: existing.keyImage,
+      publicKey: existing.publicKey,
+      amount: existing.amount,
+      globalIndex: existing.globalIndex,
+      txHash: existing.txHash,
+      localIndex: existing.localIndex,
+      height: existing.height,
+      accountIndex: existing.accountIndex,
+      subaddressIndex: existing.subaddressIndex,
+      spent: existing.spent,
+      spendingTxHash: existing.spendingTxHash,
+      frozen: false,
+      unlockTime: existing.unlockTime,
+    );
+    await _persist();
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // Transactions
   // ─────────────────────────────────────────────────────────────────────────
