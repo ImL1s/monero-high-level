@@ -98,15 +98,43 @@ class DaemonClient {
   ///
   /// This is much faster than startMining for E2E tests in regtest mode.
   /// Returns the height after generating the blocks.
+  ///
+  /// Includes retry logic to handle "BUSY" status when daemon is still
+  /// initializing after startup.
   Future<int> generateblocks({
     required int amountOfBlocks,
     required String walletAddress,
+    int maxRetries = 10,
+    Duration retryDelay = const Duration(seconds: 2),
   }) async {
-    final result = await _jsonRpc('generateblocks', {
-      'amount_of_blocks': amountOfBlocks,
-      'wallet_address': walletAddress,
-    });
-    return result['height'] as int? ?? 0;
+    for (var attempt = 0; attempt < maxRetries; attempt++) {
+      final result = await _jsonRpc('generateblocks', {
+        'amount_of_blocks': amountOfBlocks,
+        'wallet_address': walletAddress,
+      });
+
+      final status = result['status'] as String? ?? 'OK';
+      final height = result['height'] as int? ?? 0;
+
+      // If status is OK and we got a valid height, return it
+      if (status == 'OK' && height > 0) {
+        return height;
+      }
+
+      // If status is BUSY, wait and retry
+      if (status == 'BUSY') {
+        if (attempt < maxRetries - 1) {
+          await Future<void>.delayed(retryDelay);
+          continue;
+        }
+      }
+
+      // For other statuses or last attempt, return what we got
+      return height;
+    }
+
+    // Should not reach here, but return 0 if we do
+    return 0;
   }
 
   /// Get block by height

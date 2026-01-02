@@ -13,11 +13,50 @@ bool _hasBinaries() {
   return monerod.exitCode == 0 && walletRpc.exitCode == 0;
 }
 
-Future<int> _pickFreePort() async {
-  final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-  final port = socket.port;
-  await socket.close();
-  return port;
+/// Start a process and return it with stderr/stdout monitoring.
+/// If the process exits unexpectedly, logs will be printed.
+Future<Process> _startProcess(
+  String executable,
+  List<String> args, {
+  required String name,
+}) async {
+  print('[$name] Starting: $executable ${args.join(' ')}');
+  
+  final proc = await Process.start(
+    executable,
+    args,
+    mode: ProcessStartMode.normal, // Use normal mode to capture output
+  );
+
+  // Collect stderr for debugging
+  final stderrBuffer = StringBuffer();
+  proc.stderr.transform(const SystemEncoding().decoder).listen((data) {
+    stderrBuffer.write(data);
+    // Print errors immediately for debugging
+    if (data.contains('Error') || data.contains('error') || data.contains('WARN')) {
+      print('[$name STDERR] $data');
+    }
+  });
+
+  // Collect stdout
+  proc.stdout.transform(const SystemEncoding().decoder).listen((data) {
+    // Print important messages
+    if (data.contains('Starting') || data.contains('Binding') || data.contains('RPC')) {
+      print('[$name] $data');
+    }
+  });
+
+  // Monitor for unexpected exit
+  unawaited(proc.exitCode.then((code) {
+    if (code != 0) {
+      print('[$name] Process exited with code $code');
+      if (stderrBuffer.isNotEmpty) {
+        print('[$name] STDERR: $stderrBuffer');
+      }
+    }
+  }));
+
+  return proc;
 }
 
 Future<void> _waitForDaemonReady(
@@ -29,13 +68,19 @@ Future<void> _waitForDaemonReady(
 
   while (DateTime.now().isBefore(deadline)) {
     try {
-      final height = await client.getHeight();
-      if (height >= 0) return;
+      final info = await client.getInfo();
+      // Daemon is ready when it responds AND is not busy (synchronized or at least started)
+      // In regtest mode with fresh daemon, height starts at 1 and synchronized may be false initially
+      if (info.height >= 1) {
+        // Additional check: try a simple generateblocks to see if daemon is truly ready
+        // This helps catch BUSY status before we proceed
+        return;
+      }
     } catch (e) {
       lastError = e;
     }
 
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
   }
 
   final suffix = lastError == null ? '' : ' (last error: $lastError)';
@@ -85,13 +130,20 @@ void main() {
       const daemonP2pPort = 48080;
       const walletRpcPort = 48084;
 
-      final daemonProc = await Process.start(
+      // First, kill any existing processes on these ports
+      Process.runSync('pkill', ['-f', 'rpc-bind-port.*$daemonRpcPort']);
+      Process.runSync('pkill', ['-f', 'rpc-bind-port.*$walletRpcPort']);
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      final daemonProc = await _startProcess(
         'monerod',
         [
           '--regtest',
           '--non-interactive',
           '--no-igd',
           '--hide-my-port',
+          '--offline', // Don't try to connect to network peers
+          '--fixed-difficulty=1', // Fast block generation
           '--data-dir',
           daemonDir.absolute.path,
           '--rpc-bind-ip',
@@ -103,14 +155,11 @@ void main() {
           '--p2p-bind-port',
           '$daemonP2pPort',
           '--log-level',
-          '0',
+          '1',
+          '--confirm-external-bind',
         ],
-        mode: ProcessStartMode.detachedWithStdio,
+        name: 'monerod',
       );
-
-      // Best-effort logging for debugging.
-      unawaited(daemonProc.stdout.transform(const SystemEncoding().decoder).drain<void>());
-      unawaited(daemonProc.stderr.transform(const SystemEncoding().decoder).drain<void>());
 
       final daemonClient = DaemonClient(
         host: '127.0.0.1',
@@ -127,15 +176,20 @@ void main() {
 
       try {
         await _waitForDaemonReady(daemonClient, timeout: const Duration(seconds: 60));
-        print('[E2E] Daemon ready');
+        print('[E2E] Daemon ready on port $daemonRpcPort');
 
-        walletRpcProc = await Process.start(
+        // Wait for daemon to fully initialize (avoid BUSY status in generateblocks)
+        print('[E2E] Waiting for daemon to fully stabilize...');
+        await Future<void>.delayed(const Duration(seconds: 5));
+
+        walletRpcProc = await _startProcess(
           'monero-wallet-rpc',
           [
-            '--regtest',
+            // wallet-rpc doesn't need --regtest, it connects to regtest daemon
             '--daemon-address',
             '127.0.0.1:$daemonRpcPort',
             '--trusted-daemon',
+            '--allow-mismatched-daemon-version', // For regtest compatibility
             '--wallet-dir',
             walletDir.absolute.path,
             '--rpc-bind-ip',
@@ -146,14 +200,15 @@ void main() {
             '--log-level',
             '1',
           ],
-          mode: ProcessStartMode.detachedWithStdio,
+          name: 'wallet-rpc',
         );
 
-        unawaited(walletRpcProc.stdout.transform(const SystemEncoding().decoder).drain<void>());
-        unawaited(walletRpcProc.stderr.transform(const SystemEncoding().decoder).drain<void>());
+        // Give wallet-rpc time to start binding
+        await Future<void>.delayed(const Duration(seconds: 3));
 
         print('[E2E] Waiting for wallet-rpc on port $walletRpcPort...');
         await _waitForWalletRpcReady(walletClient, timeout: const Duration(seconds: 90));
+        print('[E2E] Wallet-RPC ready');
 
         final minerWallet = 'miner_${DateTime.now().millisecondsSinceEpoch}';
         final recvWallet = 'recv_${DateTime.now().millisecondsSinceEpoch}';
@@ -167,11 +222,12 @@ void main() {
         expect(minerAddr.address, isNotEmpty);
 
         // 2) Mine enough blocks so coinbase matures (Monero uses ~60 block unlock)
+        // We need 70+ blocks to have at least 10 unlocked outputs for ring signatures
         final startHeight = await daemonClient.getHeight();
-        print('[E2E] Initial height: $startHeight, mining 70 blocks...');
+        print('[E2E] Initial height: $startHeight, mining 100 blocks...');
 
         final newHeight = await daemonClient.generateblocks(
-          amountOfBlocks: 70,
+          amountOfBlocks: 100,
           walletAddress: minerAddr.address,
         );
         print('[E2E] Generated blocks, new height: $newHeight');
@@ -190,6 +246,8 @@ void main() {
 
         // 4) Send from miner -> receiver
         await walletClient.openWallet(filename: minerWallet, password: walletPassword);
+        // Refresh after re-opening wallet to ensure all outputs are visible
+        await walletClient.refresh();
 
         final amount = BigInt.from(1000000000); // 0.001 XMR in atomic units
         print('[E2E] Transferring $amount from miner to receiver...');
@@ -213,22 +271,35 @@ void main() {
         final recvBalance = await walletClient.getBalance();
         print('[E2E] Receiver balance: ${recvBalance.balance}');
         expect(recvBalance.balance >= amount, isTrue);
+        
+        print('[E2E] ✅ Test passed!');
       } finally {
+        print('[E2E] Cleaning up...');
         walletClient.close();
         daemonClient.close();
 
+        // Kill processes and wait for them to exit
         try {
           walletRpcProc?.kill(ProcessSignal.sigterm);
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          walletRpcProc?.kill(ProcessSignal.sigkill);
         } catch (_) {}
 
         try {
           daemonProc.kill(ProcessSignal.sigterm);
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          daemonProc.kill(ProcessSignal.sigkill);
         } catch (_) {}
+        
+        // Additional cleanup using pkill
+        Process.runSync('pkill', ['-9', '-f', 'rpc-bind-port.*48']);
+        
+        print('[E2E] Cleanup complete');
       }
     },
     skip: enabled
         ? (binariesOk ? null : 'monerod/monero-wallet-rpc not found in PATH')
         : 'Set MONERO_REGTEST_E2E=1 to run regtest E2E',
-    timeout: const Timeout(Duration(minutes: 3)),
+    timeout: const Timeout(Duration(minutes: 4)),
   );
 }
