@@ -48,6 +48,20 @@ monero_high_level/
 
 ## 🚀 Quick Start
 
+## 📚 Documentation
+
+- [docs/e2e.md](docs/e2e.md): how to run E2E (offline + regtest)
+- [docs/dart.md](docs/dart.md): Dart package usage and examples
+- [docs/kmp.md](docs/kmp.md): KMP module overview (entry point)
+- [kmp/README.md](kmp/README.md): KMP usage and examples
+- [docs/architecture.md](docs/architecture.md): repo/module overview
+- [docs/contributing.md](docs/contributing.md): development workflow
+- [docs/faq.md](docs/faq.md): common issues
+- [docs/design.md](docs/design.md): architecture design
+- [docs/requirements.md](docs/requirements.md): scope + requirements
+- [docs/task.md](docs/task.md): task checklist
+- [docs/init.md](docs/init.md): feasibility/implementation notes
+
 ### KMP
 
 ```bash
@@ -70,7 +84,16 @@ dart test
 # Optional: E2E against a real monero-wallet-rpc (offline)
 brew install monero
 MONERO_E2E=1 dart test test/e2e/wallet_rpc_e2e_test.dart
+
+# Optional: Full regtest E2E (starts monerod + monero-wallet-rpc)
+MONERO_REGTEST_E2E=1 dart test test/e2e/wallet_rpc_regtest_e2e_test.dart
 ```
+
+## 🧪 E2E notes (Dart)
+
+- Offline E2E starts `monero-wallet-rpc` with `--offline --no-initial-sync` and validates common RPC flows.
+- Regtest E2E starts a local `monerod --regtest` (offline, fixed difficulty) and `monero-wallet-rpc`, mines blocks via daemon RPC `generateblocks`, performs a transfer, then mines confirmation blocks.
+- See [docs/e2e.md](docs/e2e.md) for details and troubleshooting.
 
 ## 📦 Modules
 

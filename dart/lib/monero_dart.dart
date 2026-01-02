@@ -27,7 +27,8 @@ export 'src/core/keys.dart';
 
 // Network
 export 'src/network/daemon_client.dart';
-export 'src/network/wallet_rpc_client.dart';
+export 'src/network/wallet_rpc_client.dart'
+	hide AccountInfo, AddressBookEntry, SubaddressIndex;
 export 'src/network/rpc_utils.dart';
 
 // Storage
